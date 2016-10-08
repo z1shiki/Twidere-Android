@@ -1,9 +1,13 @@
 package org.mariotaku.twidere.util;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,11 +20,11 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.mariotaku.twidere.BuildConfig;
 import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.activity.MediaViewerActivity;
+import org.mariotaku.twidere.annotation.Referral;
 import org.mariotaku.twidere.constant.SharedPreferenceConstants;
 import org.mariotaku.twidere.fragment.SensitiveContentWarningDialogFragment;
 import org.mariotaku.twidere.fragment.UserFragment;
@@ -32,9 +36,12 @@ import org.mariotaku.twidere.model.ParcelableUser;
 import org.mariotaku.twidere.model.ParcelableUserList;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.model.util.ParcelableLocationUtils;
+import org.mariotaku.twidere.model.util.ParcelableMediaUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import static android.text.TextUtils.isEmpty;
 
@@ -42,6 +49,9 @@ import static android.text.TextUtils.isEmpty;
  * Created by mariotaku on 16/1/2.
  */
 public class IntentUtils implements Constants {
+    private IntentUtils() {
+    }
+
     public static String getStatusShareText(@NonNull final Context context, @NonNull final ParcelableStatus status) {
         final Uri link = LinkCreator.getStatusWebLink(status);
         return context.getString(R.string.status_share_text_format_with_link,
@@ -56,7 +66,7 @@ public class IntentUtils implements Constants {
 
     public static void openUserProfile(@NonNull final Context context, @NonNull final ParcelableUser user,
                                        final Bundle activityOptions, final boolean newDocument,
-                                       @UserFragment.Referral final String referral) {
+                                       @Referral final String referral) {
         final Bundle extras = new Bundle();
         extras.putParcelable(EXTRA_USER, user);
         if (user.extras != null) {
@@ -80,7 +90,7 @@ public class IntentUtils implements Constants {
     public static void openUserProfile(@NonNull final Context context, @Nullable final UserKey accountKey,
                                        final UserKey userKey, final String screenName,
                                        final Bundle activityOptions, final boolean newDocument,
-                                       @UserFragment.Referral final String referral) {
+                                       @Referral final String referral) {
         final Intent intent = userProfile(accountKey, userKey, screenName, referral, null);
         if (intent == null) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && newDocument) {
@@ -94,7 +104,7 @@ public class IntentUtils implements Constants {
     }
 
     public static Intent userProfile(@Nullable UserKey accountKey, UserKey userKey, String screenName,
-                                     @UserFragment.Referral String referral, String profileUrl) {
+                                     @Referral String referral, String profileUrl) {
         if (userKey == null && isEmpty(screenName)) return null;
         final Uri uri = LinkCreator.getTwidereUserLink(accountKey, userKey, screenName);
         final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -139,7 +149,7 @@ public class IntentUtils implements Constants {
                                  final ParcelableMedia current, final Bundle options,
                                  final boolean newDocument) {
         openMedia(context, status.account_key, status.is_possibly_sensitive, status, null, current,
-                getPrimaryMedia(status), options, newDocument);
+                ParcelableMediaUtils.getPrimaryMedia(status), options, newDocument);
     }
 
     public static void openMedia(@NonNull final Context context, @Nullable final UserKey accountKey, final boolean isPossiblySensitive,
@@ -183,16 +193,49 @@ public class IntentUtils implements Constants {
     public static void openMediaDirectly(@NonNull final Context context, @Nullable final UserKey accountKey,
                                          final ParcelableStatus status, final ParcelableMedia current,
                                          final Bundle options, final boolean newDocument) {
-        openMediaDirectly(context, accountKey, status, null, current, getPrimaryMedia(status),
+        openMediaDirectly(context, accountKey, status, null, current, ParcelableMediaUtils.getPrimaryMedia(status),
                 options, newDocument);
     }
 
-    public static ParcelableMedia[] getPrimaryMedia(ParcelableStatus status) {
-        if (status.is_quote && ArrayUtils.isEmpty(status.media)) {
-            return status.quoted_media;
-        } else {
-            return status.media;
+    public static String getDefaultBrowserPackage(Context context, Uri uri, boolean checkHandled) {
+        if (checkHandled && !isWebLinkHandled(context, uri)) {
+            return null;
         }
+        final Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addCategory(Intent.CATEGORY_BROWSABLE);
+        Uri.Builder testBuilder = new Uri.Builder();
+        testBuilder.scheme(SCHEME_HTTP);
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+        int range = 'z' - 'a';
+        for (int i = 0; i < 20; i++) {
+            sb.append((char) ('a' + (Math.abs(random.nextInt()) % range)));
+        }
+        sb.append(".com");
+        testBuilder.authority(sb.toString());
+        intent.setData(testBuilder.build());
+
+        final ComponentName componentName = intent.resolveActivity(context.getPackageManager());
+        if (componentName == null || componentName.getClassName() == null) return null;
+        if (TextUtils.equals("android", componentName.getPackageName())) return null;
+        return componentName.getPackageName();
+    }
+
+    public static boolean isWebLinkHandled(Context context, Uri uri) {
+        final IntentFilter filter = getWebLinkIntentFilter(context);
+        if (filter == null) return false;
+        return filter.match(Intent.ACTION_VIEW, null, uri.getScheme(), uri,
+                Collections.singleton(Intent.CATEGORY_BROWSABLE), LOGTAG) >= 0;
+    }
+
+    @Nullable
+    public static IntentFilter getWebLinkIntentFilter(Context context) {
+        Intent testIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://twitter.com/user_name"));
+        testIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+        testIntent.setPackage(context.getPackageName());
+        final ResolveInfo resolveInfo = context.getPackageManager().resolveActivity(testIntent,
+                PackageManager.GET_RESOLVED_FILTER);
+        return resolveInfo != null ? resolveInfo.filter : null;
     }
 
     public static void openMediaDirectly(@NonNull final Context context,

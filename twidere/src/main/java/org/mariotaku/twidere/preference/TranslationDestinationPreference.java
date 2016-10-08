@@ -36,19 +36,20 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.mariotaku.twidere.Constants;
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.Language;
+import org.mariotaku.microblog.library.twitter.model.ResponseList;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.Language;
-import org.mariotaku.twidere.api.twitter.model.ResponseList;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 
 import java.text.Collator;
 import java.util.Comparator;
 import java.util.List;
 
-public class TranslationDestinationPreference extends Preference implements Constants, OnClickListener {
+import static org.mariotaku.twidere.TwidereConstants.LOGTAG;
+
+public class TranslationDestinationPreference extends Preference implements OnClickListener {
 
     private String mSelectedLanguageCode = "en";
 
@@ -161,12 +162,12 @@ public class TranslationDestinationPreference extends Preference implements Cons
 
         @Override
         protected ResponseList<Language> doInBackground(final Object... args) {
-            final Twitter twitter = TwitterAPIFactory.getDefaultTwitterInstance(getContext(), false);
+            final MicroBlog twitter = MicroBlogAPIFactory.getDefaultTwitterInstance(getContext(), false);
             if (twitter == null) return null;
             try {
                 mSelectedLanguageCode = twitter.getAccountSettings().getLanguage();
                 return twitter.getLanguages();
-            } catch (final TwitterException e) {
+            } catch (final MicroBlogException e) {
                 Log.w(LOGTAG, e);
             }
             return null;

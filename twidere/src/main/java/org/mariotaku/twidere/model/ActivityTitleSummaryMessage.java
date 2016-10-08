@@ -8,11 +8,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.StyleSpan;
 
+import org.mariotaku.microblog.library.twitter.model.Activity;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.model.Activity;
+import org.mariotaku.twidere.model.util.ParcelableActivityExtensionsKt;
 import org.mariotaku.twidere.model.util.ParcelableActivityUtils;
 import org.mariotaku.twidere.util.UserColorNameManager;
 import org.oshkimaadziig.george.androidutils.SpanFormatter;
@@ -80,16 +82,8 @@ public class ActivityTitleSummaryMessage {
                                 R.string.activity_about_me_like_multi, sources, nameFirst);
                     }
                 }
-                final StringBuilder summaryBuilder = new StringBuilder();
-                boolean first = true;
-                for (ParcelableStatus status : activity.target_statuses) {
-                    if (!first) {
-                        summaryBuilder.append('\n');
-                    }
-                    summaryBuilder.append(status.text_unescaped.replace('\n', ' '));
-                    first = false;
-                }
-                return new ActivityTitleSummaryMessage(typeIcon, color, title, summaryBuilder.toString());
+                final CharSequence summary = generateTextOnlySummary(context, activity.target_statuses);
+                return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
             case Activity.Action.RETWEET: {
                 int typeIcon = R.drawable.ic_activity_action_retweet;
@@ -102,7 +96,8 @@ public class ActivityTitleSummaryMessage {
                     title = getTitleStringAboutMe(resources, manager, R.string.activity_about_me_retweet,
                             R.string.activity_about_me_retweet_multi, sources, nameFirst);
                 }
-                final String summary = activity.target_statuses[0].text_unescaped;
+                final CharSequence summary = generateTextOnlySummary(context,
+                        activity.target_object_statuses);
                 return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
             case Activity.Action.FAVORITED_RETWEET: {
@@ -121,7 +116,8 @@ public class ActivityTitleSummaryMessage {
                     title = getTitleStringAboutMe(resources, manager, R.string.activity_about_me_liked_retweet,
                             R.string.activity_about_me_liked_retweet_multi, sources, nameFirst);
                 }
-                final String summary = activity.target_statuses[0].text_unescaped;
+                final Spanned summary = generateStatusTextSummary(context, activity.target_statuses,
+                        nameFirst);
                 return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
             case Activity.Action.RETWEETED_RETWEET: {
@@ -130,7 +126,8 @@ public class ActivityTitleSummaryMessage {
                 int color = ContextCompat.getColor(context, R.color.highlight_retweet);
                 CharSequence title = getTitleStringAboutMe(resources, manager, R.string.activity_about_me_retweeted_retweet,
                         R.string.activity_about_me_retweeted_retweet_multi, sources, nameFirst);
-                final String summary = activity.target_statuses[0].text_unescaped;
+                final Spanned summary = generateStatusTextSummary(context, activity.target_statuses,
+                        nameFirst);
                 return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
             case Activity.Action.RETWEETED_MENTION: {
@@ -139,7 +136,8 @@ public class ActivityTitleSummaryMessage {
                 int color = ContextCompat.getColor(context, R.color.highlight_retweet);
                 CharSequence title = getTitleStringAboutMe(resources, manager, R.string.activity_about_me_retweeted_mention,
                         R.string.activity_about_me_retweeted_mention_multi, sources, nameFirst);
-                final String summary = activity.target_statuses[0].text_unescaped;
+                final Spanned summary = generateStatusTextSummary(context, activity.target_statuses,
+                        nameFirst);
                 return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
             case Activity.Action.FAVORITED_MENTION: {
@@ -158,7 +156,8 @@ public class ActivityTitleSummaryMessage {
                     title = getTitleStringAboutMe(resources, manager, R.string.activity_about_me_liked_mention,
                             R.string.activity_about_me_liked_mention_multi, sources, nameFirst);
                 }
-                final String summary = activity.target_statuses[0].text_unescaped;
+                final Spanned summary = generateStatusTextSummary(context, activity.target_statuses,
+                        nameFirst);
                 return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
             case Activity.Action.LIST_CREATED: {
@@ -202,7 +201,7 @@ public class ActivityTitleSummaryMessage {
             case Activity.Action.MENTION:
             case Activity.Action.REPLY:
             case Activity.Action.QUOTE: {
-                final ParcelableStatus status = ParcelableActivityUtils.getActivityStatus(activity);
+                final ParcelableStatus status = ParcelableActivityExtensionsKt.getActivityStatus(activity);
                 if (status == null) return null;
                 final SpannableString title = new SpannableString(manager.getDisplayName(status,
                         nameFirst));
@@ -225,7 +224,8 @@ public class ActivityTitleSummaryMessage {
                 CharSequence title;
                 title = getTitleStringAboutMe(resources, manager, R.string.activity_about_me_media_tagged,
                         R.string.activity_about_me_media_tagged_multi, sources, nameFirst);
-                final String summary = activity.target_statuses[0].text_unescaped;
+                final Spanned summary = generateStatusTextSummary(context, activity.target_statuses,
+                        nameFirst);
                 return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
             case Activity.Action.FAVORITED_MEDIA_TAGGED: {
@@ -244,7 +244,8 @@ public class ActivityTitleSummaryMessage {
                     title = getTitleStringAboutMe(resources, manager, R.string.activity_about_me_liked_media_tagged,
                             R.string.activity_about_me_liked_media_tagged_multi, sources, nameFirst);
                 }
-                final String summary = activity.target_statuses[0].text_unescaped;
+                final Spanned summary = generateStatusTextSummary(context, activity.target_statuses,
+                        nameFirst);
                 return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
             case Activity.Action.RETWEETED_MEDIA_TAGGED: {
@@ -253,17 +254,51 @@ public class ActivityTitleSummaryMessage {
                 int color = ContextCompat.getColor(context, R.color.highlight_retweet);
                 CharSequence title = getTitleStringAboutMe(resources, manager, R.string.activity_about_me_retweeted_media_tagged,
                         R.string.activity_about_me_retweeted_media_tagged_multi, sources, nameFirst);
-                final String summary = activity.target_statuses[0].text_unescaped;
+                final Spanned summary = generateStatusTextSummary(context, activity.target_statuses,
+                        nameFirst);
                 return new ActivityTitleSummaryMessage(typeIcon, color, title, summary);
             }
         }
         return null;
     }
 
+    public static Spanned generateStatusTextSummary(Context context, ParcelableStatus[] statuses, boolean nameFirst) {
+        if (statuses == null) return null;
+        final SpannableStringBuilder summaryBuilder = new SpannableStringBuilder();
+        boolean first = true;
+        for (ParcelableStatus status : statuses) {
+            if (!first) {
+                summaryBuilder.append('\n');
+            }
+            final SpannableString displayName = new SpannableString(UserColorNameManager.decideDisplayName(status.user_nickname,
+                    status.user_name, status.user_screen_name, nameFirst));
+            displayName.setSpan(new StyleSpan(Typeface.BOLD), 0, displayName.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            summaryBuilder.append(SpanFormatter.format(context.getString(R.string.title_summary_line_format),
+                    displayName, status.text_unescaped.replace('\n', ' ')));
+            first = false;
+        }
+        return summaryBuilder;
+    }
+
+    public static CharSequence generateTextOnlySummary(Context context, ParcelableStatus[] statuses) {
+        if (statuses == null) return null;
+        final StringBuilder summaryBuilder = new StringBuilder();
+        boolean first = true;
+        for (ParcelableStatus status : statuses) {
+            if (!first) {
+                summaryBuilder.append('\n');
+            }
+            summaryBuilder.append(status.text_unescaped.replace('\n', ' '));
+            first = false;
+        }
+        return summaryBuilder;
+    }
+
     private static Spanned getTitleStringAboutMe(Resources resources, UserColorNameManager manager,
                                                  int stringRes, int stringResMulti,
                                                  ParcelableUser[] sources, boolean nameFirst) {
-        if ((sources == null) || (sources.length == 0)) return null;
+        if (sources == null || sources.length == 0) return null;
         final Configuration configuration = resources.getConfiguration();
         final SpannableString firstDisplayName = new SpannableString(manager.getDisplayName(sources[0],
                 nameFirst));
@@ -289,7 +324,7 @@ public class ActivityTitleSummaryMessage {
     private static Spanned getTitleStringByFriends(Resources resources, UserColorNameManager manager,
                                                    int stringRes, int stringResMulti,
                                                    ParcelableUser[] sources, Object[] targets, boolean nameFirst) {
-        if ((sources == null) || (sources.length == 0)) return null;
+        if (sources == null || sources.length == 0) return null;
         final Configuration configuration = resources.getConfiguration();
         final SpannableString firstSourceName = new SpannableString(manager.getDisplayName(
                 sources[0], nameFirst));

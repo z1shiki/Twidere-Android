@@ -16,6 +16,9 @@ import java.util.Set;
  * Created by mariotaku on 16/3/8.
  */
 public class InternalParseUtils {
+    private InternalParseUtils() {
+    }
+
     public static String bundleToJSON(final Bundle args) {
         final Set<String> keys = args.keySet();
         final StringWriter sw = new StringWriter();
@@ -66,4 +69,5 @@ public class InternalParseUtils {
         }
         return result.substring(0, i == dotIdx ? dotIdx : i + 1);
     }
+
 }

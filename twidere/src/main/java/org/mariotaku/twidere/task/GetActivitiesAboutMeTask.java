@@ -4,14 +4,14 @@ import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.Activity;
+import org.mariotaku.microblog.library.twitter.model.CursorTimestampResponse;
+import org.mariotaku.microblog.library.twitter.model.Paging;
+import org.mariotaku.microblog.library.twitter.model.ResponseList;
+import org.mariotaku.microblog.library.twitter.model.Status;
 import org.mariotaku.twidere.annotation.ReadPositionTag;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.Activity;
-import org.mariotaku.twidere.api.twitter.model.CursorTimestampResponse;
-import org.mariotaku.twidere.api.twitter.model.Paging;
-import org.mariotaku.twidere.api.twitter.model.ResponseList;
-import org.mariotaku.twidere.api.twitter.model.Status;
 import org.mariotaku.twidere.model.ParcelableAccount;
 import org.mariotaku.twidere.model.ParcelableCredentials;
 import org.mariotaku.twidere.model.UserKey;
@@ -37,15 +37,15 @@ public class GetActivitiesAboutMeTask extends GetActivitiesTask {
     }
 
     @Override
-    protected void saveReadPosition(@NonNull UserKey accountId, ParcelableCredentials credentials, @NonNull Twitter twitter) {
+    protected void saveReadPosition(@NonNull UserKey accountKey, ParcelableCredentials credentials, @NonNull MicroBlog twitter) {
         if (ParcelableAccount.Type.TWITTER.equals(ParcelableAccountUtils.getAccountType(credentials))) {
-            if (Utils.isOfficialCredentials(context, credentials)) {
+            if (Utils.isOfficialCredentials(getContext(), credentials)) {
                 try {
                     CursorTimestampResponse response = twitter.getActivitiesAboutMeUnread(true);
-                    final String tag = Utils.getReadPositionTagWithAccounts(ReadPositionTag.ACTIVITIES_ABOUT_ME,
-                            accountId);
-                    readStateManager.setPosition(tag, response.getCursor(), false);
-                } catch (TwitterException e) {
+                    final String tag = Utils.getReadPositionTagWithAccount(ReadPositionTag.ACTIVITIES_ABOUT_ME,
+                            accountKey);
+                    getReadStateManager().setPosition(tag, response.getCursor(), false);
+                } catch (MicroBlogException e) {
                     // Ignore
                 }
             }
@@ -53,10 +53,10 @@ public class GetActivitiesAboutMeTask extends GetActivitiesTask {
     }
 
     @Override
-    protected ResponseList<Activity> getActivities(@NonNull final Twitter twitter,
+    protected ResponseList<Activity> getActivities(@NonNull final MicroBlog twitter,
                                                    @NonNull final ParcelableCredentials credentials,
-                                                   @NonNull final Paging paging) throws TwitterException {
-        if (Utils.isOfficialCredentials(context, credentials)) {
+                                                   @NonNull final Paging paging) throws MicroBlogException {
+        if (Utils.isOfficialCredentials(getContext(), credentials)) {
             return twitter.getActivitiesAboutMe(paging);
         }
         final ResponseList<Activity> activities = new ResponseList<>();

@@ -23,17 +23,17 @@ import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.CursorSupport;
+import org.mariotaku.microblog.library.twitter.model.PageableResponseList;
+import org.mariotaku.microblog.library.twitter.model.UserList;
 import org.mariotaku.twidere.TwidereConstants;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.CursorSupport;
-import org.mariotaku.twidere.api.twitter.model.PageableResponseList;
-import org.mariotaku.twidere.api.twitter.model.UserList;
 import org.mariotaku.twidere.loader.iface.ICursorSupportLoader;
 import org.mariotaku.twidere.model.ParcelableUserList;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.model.util.ParcelableUserListUtils;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 import org.mariotaku.twidere.util.collection.NoDuplicatesArrayList;
 
 import java.util.Collections;
@@ -74,15 +74,15 @@ public abstract class BaseUserListsLoader extends AsyncTaskLoader<List<Parcelabl
         return mPrevCursor;
     }
 
-    public abstract List<UserList> getUserLists(final Twitter twitter) throws TwitterException;
+    public abstract List<UserList> getUserLists(final MicroBlog twitter) throws MicroBlogException;
 
     @Override
     public List<ParcelableUserList> loadInBackground() {
-        final Twitter twitter = TwitterAPIFactory.getTwitterInstance(getContext(), mAccountId, true);
+        final MicroBlog twitter = MicroBlogAPIFactory.getInstance(getContext(), mAccountId, true);
         List<UserList> listLoaded = null;
         try {
             listLoaded = getUserLists(twitter);
-        } catch (final TwitterException e) {
+        } catch (final MicroBlogException e) {
             Log.w(LOGTAG, e);
         }
         if (listLoaded != null) {

@@ -24,7 +24,7 @@ import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.database.Cursor;
 import android.support.v7.widget.RecyclerView.ViewHolder;
-import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.view.View;
 import android.widget.TextView;
 
@@ -33,8 +33,9 @@ import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.adapter.MessageConversationAdapter;
 import org.mariotaku.twidere.model.ParcelableDirectMessageCursorIndices;
 import org.mariotaku.twidere.model.ParcelableMedia;
+import org.mariotaku.twidere.model.SpanItem;
 import org.mariotaku.twidere.model.UserKey;
-import org.mariotaku.twidere.util.HtmlSpanBuilder;
+import org.mariotaku.twidere.model.util.ParcelableStatusUtils;
 import org.mariotaku.twidere.util.JsonSerializer;
 import org.mariotaku.twidere.util.MediaLoaderWrapper;
 import org.mariotaku.twidere.util.ThemeUtils;
@@ -64,7 +65,20 @@ public class MessageViewHolder extends ViewHolder {
         textColorSecondary = a.getColor(R.styleable.MessageViewHolder_android_textColorSecondary, 0);
         textColorSecondaryInverse = a.getColor(R.styleable.MessageViewHolder_android_textColorSecondaryInverse, 0);
         a.recycle();
-        messageContent = (MessageBubbleView) itemView.findViewById(R.id.message_content);
+        messageContent = (MessageBubbleView) itemView.findViewById(R.id.messageContent);
+        messageContent.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                itemView.getParent().showContextMenuForChild(itemView);
+                return true;
+            }
+        });
+        messageContent.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                itemView.getParent().showContextMenuForChild(itemView);
+            }
+        });
         textView = (TextView) itemView.findViewById(R.id.text);
         time = (TextView) itemView.findViewById(R.id.time);
         mediaContainer = (CardMediaContainer) itemView.findViewById(R.id.media_preview_container);
@@ -80,14 +94,17 @@ public class MessageViewHolder extends ViewHolder {
         final long timestamp = cursor.getLong(indices.timestamp);
         final ParcelableMedia[] media = JsonSerializer.parseArray(cursor.getString(indices.media),
                 ParcelableMedia.class);
-        final Spannable text = HtmlSpanBuilder.fromHtml(cursor.getString(indices.text_html));
+        final SpanItem[] spans = JsonSerializer.parseArray(cursor.getString(indices.spans),
+                SpanItem.class);
+        final SpannableStringBuilder text = SpannableStringBuilder.valueOf(cursor.getString(indices.text_unescaped));
+        ParcelableStatusUtils.INSTANCE.applySpans(text, spans);
         // Detect entity support
         linkify.applyAllLinks(text, accountKey, false, true);
         textView.setText(text);
         time.setText(Utils.formatToLongTimeString(context, timestamp));
         mediaContainer.setVisibility(media != null && media.length > 0 ? View.VISIBLE : View.GONE);
-        mediaContainer.displayMedia(media, loader, accountKey, getLayoutPosition(), true,
-                adapter.getOnMediaClickListener(), adapter.getMediaLoadingHandler());
+        mediaContainer.displayMedia(loader, media, accountKey, adapter.getOnMediaClickListener(), adapter.getMediaLoadingHandler(), getLayoutPosition(), true
+        );
     }
 
     public void setMessageColor(int color) {

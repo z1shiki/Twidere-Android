@@ -15,6 +15,9 @@ import android.os.Parcelable;
  */
 public class ActivitySupport {
 
+    private ActivitySupport() {
+    }
+
     public static void setTaskDescription(Activity activity, TaskDescriptionCompat taskDescription) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return;
         ActivityAccessorL.setTaskDescription(activity, taskDescription);
@@ -22,6 +25,9 @@ public class ActivitySupport {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     static class ActivityAccessorL {
+        private ActivityAccessorL() {
+        }
+
         public static void setTaskDescription(Activity activity, TaskDescriptionCompat taskDescription) {
             activity.setTaskDescription(toNativeTaskDescription(taskDescription));
         }
@@ -48,7 +54,7 @@ public class ActivitySupport {
          * @param colorPrimary A color to override the theme's primary color.  This color must be opaque.
          */
         public TaskDescriptionCompat(String label, Bitmap icon, int colorPrimary) {
-            if ((colorPrimary != 0) && (Color.alpha(colorPrimary) != 255)) {
+            if (colorPrimary != 0 && Color.alpha(colorPrimary) != 255) {
                 throw new RuntimeException("A TaskDescription's primary color should be opaque");
             }
 

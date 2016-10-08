@@ -19,22 +19,25 @@
 
 package org.mariotaku.twidere.util;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v4.util.SimpleArrayMap;
 import android.text.TextUtils;
 import android.util.Log;
+import android.webkit.MimeTypeMap;
 
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.DirectMessage;
+import org.mariotaku.microblog.library.twitter.model.Paging;
+import org.mariotaku.microblog.library.twitter.model.ResponseList;
+import org.mariotaku.microblog.library.twitter.model.Status;
+import org.mariotaku.microblog.library.twitter.model.User;
+import org.mariotaku.restfu.http.ContentType;
 import org.mariotaku.restfu.http.mime.FileBody;
 import org.mariotaku.twidere.Constants;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.DirectMessage;
-import org.mariotaku.twidere.api.twitter.model.Paging;
-import org.mariotaku.twidere.api.twitter.model.ResponseList;
-import org.mariotaku.twidere.api.twitter.model.Status;
-import org.mariotaku.twidere.api.twitter.model.User;
 import org.mariotaku.twidere.model.ListResponse;
 import org.mariotaku.twidere.model.ParcelableAccount;
 import org.mariotaku.twidere.model.SingleResponse;
@@ -44,6 +47,7 @@ import org.mariotaku.twidere.provider.TwidereDataStore.UnreadCounts;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
@@ -67,25 +71,25 @@ public class TwitterWrapper implements Constants {
 
     public static SingleResponse<Boolean> deleteProfileBannerImage(final Context context,
                                                                    final UserKey accountKey) {
-        final Twitter twitter = TwitterAPIFactory.getTwitterInstance(context, accountKey, false);
-        if (twitter == null) return new SingleResponse<>(false, null);
+        final MicroBlog twitter = MicroBlogAPIFactory.getInstance(context, accountKey, false);
+        if (twitter == null) return SingleResponse.Companion.getInstance(false);
         try {
             twitter.removeProfileBannerImage();
-            return new SingleResponse<>(true, null);
-        } catch (final TwitterException e) {
-            return new SingleResponse<>(false, e);
+            return SingleResponse.Companion.getInstance(true);
+        } catch (final MicroBlogException e) {
+            return SingleResponse.Companion.getInstance(false, e);
         }
     }
 
     public static int removeUnreadCounts(final Context context, final int position, final long account_id,
-                                         final long... status_ids) {
-        if (context == null || position < 0 || status_ids == null || status_ids.length == 0)
+                                         final long... statusIds) {
+        if (context == null || position < 0 || statusIds == null || statusIds.length == 0)
             return 0;
         int result = 0;
         final Uri.Builder builder = UnreadCounts.CONTENT_URI.buildUpon();
         builder.appendPath(String.valueOf(position));
         builder.appendPath(String.valueOf(account_id));
-        builder.appendPath(TwidereArrayUtils.toString(status_ids, ',', false));
+        builder.appendPath(TwidereArrayUtils.toString(statusIds, ',', false));
         result += context.getContentResolver().delete(builder.build(), null, null);
         return result;
     }
@@ -107,8 +111,8 @@ public class TwitterWrapper implements Constants {
     }
 
     @NonNull
-    public static User showUser(final Twitter twitter, final String id, final String screenName,
-                                final String accountType) throws TwitterException {
+    public static User showUser(final MicroBlog twitter, final String id, final String screenName,
+                                final String accountType) throws MicroBlogException {
         if (id != null) {
             if (ParcelableAccount.Type.FANFOU.equals(accountType)) {
                 return twitter.showFanfouUser(id);
@@ -120,13 +124,13 @@ public class TwitterWrapper implements Constants {
             }
             return twitter.showUserByScreenName(screenName);
         }
-        throw new TwitterException("Invalid user id or screen name");
+        throw new MicroBlogException("Invalid user id or screen name");
     }
 
     @NonNull
-    public static User showUserAlternative(final Twitter twitter, final String id,
+    public static User showUserAlternative(final MicroBlog twitter, final String id,
                                            final String screenName)
-            throws TwitterException {
+            throws MicroBlogException {
         final String searchScreenName;
         if (screenName != null) {
             searchScreenName = screenName;
@@ -154,16 +158,16 @@ public class TwitterWrapper implements Constants {
                     return user;
             }
         }
-        throw new TwitterException("can't find user");
+        throw new MicroBlogException("can't find user");
     }
 
     @NonNull
-    public static User tryShowUser(final Twitter twitter, final String id, final String screenName,
+    public static User tryShowUser(final MicroBlog twitter, final String id, final String screenName,
                                    String accountType)
-            throws TwitterException {
+            throws MicroBlogException {
         try {
             return showUser(twitter, id, screenName, accountType);
-        } catch (final TwitterException e) {
+        } catch (final MicroBlogException e) {
             // Twitter specific error for private API calling through proxy
             if (e.getStatusCode() == 200) {
                 return showUserAlternative(twitter, id, screenName);
@@ -172,15 +176,15 @@ public class TwitterWrapper implements Constants {
         }
     }
 
-    public static void updateProfileBannerImage(final Context context, final Twitter twitter,
+    public static void updateProfileBannerImage(final Context context, final MicroBlog twitter,
                                                 final Uri imageUri, final boolean deleteImage)
-            throws FileNotFoundException, TwitterException {
-        InputStream is = null;
+            throws IOException, MicroBlogException {
+        FileBody fileBody = null;
         try {
-            is = context.getContentResolver().openInputStream(imageUri);
-            twitter.updateProfileBannerImage(new FileBody(is, "image", -1, null));
+            fileBody = getFileBody(context, imageUri);
+            twitter.updateProfileBannerImage(fileBody);
         } finally {
-            Utils.closeSilently(is);
+            Utils.closeSilently(fileBody);
             if (deleteImage && "file".equals(imageUri.getScheme())) {
                 final File file = new File(imageUri.getPath());
                 if (!file.delete()) {
@@ -190,15 +194,18 @@ public class TwitterWrapper implements Constants {
         }
     }
 
-    public static User updateProfileImage(final Context context, final Twitter twitter,
-                                          final Uri imageUri, final boolean deleteImage)
-            throws FileNotFoundException, TwitterException {
-        InputStream is = null;
+    public static void updateProfileBackgroundImage(@NonNull final Context context,
+                                                    @NonNull final MicroBlog twitter,
+                                                    @NonNull final Uri imageUri,
+                                                    final boolean tile,
+                                                    final boolean deleteImage)
+            throws IOException, MicroBlogException {
+        FileBody fileBody = null;
         try {
-            is = context.getContentResolver().openInputStream(imageUri);
-            return twitter.updateProfileImage(new FileBody(is, "image", -1, null));
+            fileBody = getFileBody(context, imageUri);
+            twitter.updateProfileBackgroundImage(fileBody, tile);
         } finally {
-            Utils.closeSilently(is);
+            Utils.closeSilently(fileBody);
             if (deleteImage && "file".equals(imageUri.getScheme())) {
                 final File file = new File(imageUri.getPath());
                 if (!file.delete()) {
@@ -206,6 +213,51 @@ public class TwitterWrapper implements Constants {
                 }
             }
         }
+    }
+
+    public static User updateProfileImage(final Context context, final MicroBlog twitter,
+                                          final Uri imageUri, final boolean deleteImage)
+            throws IOException, MicroBlogException {
+        FileBody fileBody = null;
+        try {
+            fileBody = getFileBody(context, imageUri);
+            return twitter.updateProfileImage(fileBody);
+        } finally {
+            Utils.closeSilently(fileBody);
+            if (deleteImage && "file".equals(imageUri.getScheme())) {
+                final File file = new File(imageUri.getPath());
+                if (!file.delete()) {
+                    Log.w(LOGTAG, String.format("Unable to delete %s", file));
+                }
+            }
+        }
+    }
+
+    private static FileBody getFileBody(Context context, Uri imageUri) throws IOException {
+        final ContentResolver cr = context.getContentResolver();
+        String type = cr.getType(imageUri);
+        if (type == null) {
+            type = BitmapUtils.getImageMimeType(cr, imageUri);
+        }
+        final ContentType contentType;
+        final String extension;
+        if (type != null) {
+            contentType = ContentType.parse(type);
+            extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(type);
+        } else {
+            contentType = null;
+            extension = null;
+        }
+        final InputStream is = cr.openInputStream(imageUri);
+        if (is == null) throw new FileNotFoundException(imageUri.toString());
+
+        final String fileName;
+        if (extension != null) {
+            fileName = "image." + extension;
+        } else {
+            fileName = "image";
+        }
+        return new FileBody(is, fileName, is.available(), contentType);
     }
 
     public static final class MessageListResponse extends TwitterListResponse<DirectMessage> {

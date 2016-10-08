@@ -52,6 +52,7 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import com.afollestad.appthemeengine.Config;
+import com.afollestad.appthemeengine.util.ATEUtil;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.mariotaku.twidere.Constants;
@@ -66,7 +67,7 @@ import org.mariotaku.twidere.util.support.ViewSupport;
 public class ThemeUtils implements Constants {
 
     public static final int ACCENT_COLOR_THRESHOLD = 192;
-    public static final int DARK_COLOR_THRESHOLD = 64;
+    public static final int DARK_COLOR_THRESHOLD = 128;
 
     public static final int[] ATTRS_TEXT_COLOR_PRIMARY = {android.R.attr.textColorPrimary};
 
@@ -103,8 +104,9 @@ public class ThemeUtils implements Constants {
     }
 
     public static void applyWindowBackground(@NonNull Context context, @NonNull Window window, String option, int alpha) {
-        if (isWindowFloating(context)) return;
-        if (VALUE_THEME_BACKGROUND_TRANSPARENT.equals(option)) {
+        if (isWindowFloating(context)) {
+            window.setBackgroundDrawable(getWindowBackground(context));
+        } else if (VALUE_THEME_BACKGROUND_TRANSPARENT.equals(option)) {
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
             window.setBackgroundDrawable(getWindowBackgroundFromThemeApplyAlpha(context, alpha));
         } else if (VALUE_THEME_BACKGROUND_SOLID.equals(option)) {
@@ -188,12 +190,12 @@ public class ThemeUtils implements Constants {
     }
 
     public static int getColorFromAttribute(Context context, int attr, int def) {
-        final TypedValue outValue = new TypedValue();
-        if (!context.getTheme().resolveAttribute(attr, outValue, true))
-            return def;
-        if (outValue.type == TypedValue.TYPE_REFERENCE)
-            return ContextCompat.getColor(context, attr);
-        return outValue.data;
+        final TypedArray a = context.obtainStyledAttributes(new int[]{attr});
+        try {
+            return a.getColor(0, def);
+        } finally {
+            a.recycle();
+        }
     }
 
 
@@ -290,7 +292,7 @@ public class ThemeUtils implements Constants {
 
     public static int getActionBarAlpha(final int alpha) {
         final int normalizedAlpha = TwidereMathUtils.clamp(alpha, 0, 0xFF);
-        final int delta = (ThemeBackgroundPreference.MAX_ALPHA - normalizedAlpha);
+        final int delta = ThemeBackgroundPreference.MAX_ALPHA - normalizedAlpha;
         return TwidereMathUtils.clamp(ThemeBackgroundPreference.MAX_ALPHA - delta / 2,
                 ThemeBackgroundPreference.MIN_ALPHA, ThemeBackgroundPreference.MAX_ALPHA);
     }
@@ -625,5 +627,9 @@ public class ThemeUtils implements Constants {
     public static int getOptimalAccentColor(int themeColor) {
         return getOptimalAccentColor(themeColor, getContrastColor(themeColor, Color.BLACK,
                 Color.WHITE));
+    }
+
+    public static int computeDarkColor(int color) {
+        return ATEUtil.darkenColor(color);
     }
 }

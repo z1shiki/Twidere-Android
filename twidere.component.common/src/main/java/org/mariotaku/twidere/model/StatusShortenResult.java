@@ -28,6 +28,10 @@ public class StatusShortenResult implements Parcelable {
     @ParcelableThisPlease
     public String error_message;
 
+    @ParcelableThisPlease
+    @JsonField(name = "shared_owners")
+    public UserKey[] shared_owners;
+
     public StatusShortenResult() {
     }
 
@@ -75,12 +79,14 @@ public class StatusShortenResult implements Parcelable {
     }
 
     public static final Creator<StatusShortenResult> CREATOR = new Creator<StatusShortenResult>() {
+        @Override
         public StatusShortenResult createFromParcel(Parcel source) {
             StatusShortenResult target = new StatusShortenResult();
             StatusShortenResultParcelablePlease.readFromParcel(target, source);
             return target;
         }
 
+        @Override
         public StatusShortenResult[] newArray(int size) {
             return new StatusShortenResult[size];
         }

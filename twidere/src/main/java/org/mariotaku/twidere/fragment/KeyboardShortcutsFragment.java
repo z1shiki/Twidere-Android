@@ -91,7 +91,7 @@ public class KeyboardShortcutsFragment extends BasePreferenceFragment implements
             setTitle(KeyboardShortcutsHandler.getActionLabel(context, action));
             mPreferencesChangeListener = new OnSharedPreferenceChangeListener() {
                 @Override
-                public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                public void onSharedPreferenceChanged(SharedPreferences preferences, String key) {
                     updateSummary();
                 }
             };
@@ -127,13 +127,13 @@ public class KeyboardShortcutsFragment extends BasePreferenceFragment implements
 
     }
 
-    public static class ResetKeyboardShortcutConfirmDialogFragment extends BaseSupportDialogFragment
+    public static class ResetKeyboardShortcutConfirmDialogFragment extends BaseDialogFragment
             implements OnClickListener {
         @Override
         public void onClick(DialogInterface dialog, int which) {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE: {
-                    mKeyboardShortcutsHandler.reset();
+                    keyboardShortcutsHandler.reset();
                     break;
                 }
             }

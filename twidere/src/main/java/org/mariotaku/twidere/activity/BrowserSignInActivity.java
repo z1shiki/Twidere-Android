@@ -25,29 +25,31 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Toast;
 
-import org.attoparser.AttoParseException;
+import org.attoparser.ParseException;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.TwitterOAuth;
 import org.mariotaku.restfu.http.Authorization;
 import org.mariotaku.restfu.http.Endpoint;
+import org.mariotaku.restfu.oauth.OAuthAuthorization;
+import org.mariotaku.restfu.oauth.OAuthToken;
 import org.mariotaku.twidere.BuildConfig;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.TwitterOAuth;
-import org.mariotaku.twidere.api.twitter.auth.OAuthAuthorization;
-import org.mariotaku.twidere.api.twitter.auth.OAuthToken;
 import org.mariotaku.twidere.model.SingleResponse;
 import org.mariotaku.twidere.provider.TwidereDataStore.Accounts;
 import org.mariotaku.twidere.util.AsyncTaskUtils;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 import org.mariotaku.twidere.util.OAuthPasswordAuthenticator;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
 import org.mariotaku.twidere.util.webkit.DefaultWebViewClient;
 
 import java.io.IOException;
@@ -99,6 +101,12 @@ public class BrowserSignInActivity extends BaseActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_browser_sign_in);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            //noinspection deprecation
+            CookieManager.getInstance().removeAllCookie();
+        } else {
+            CookieManager.getInstance().removeAllCookies(null);
+        }
         mWebView.setWebViewClient(new AuthorizationWebViewClient(this));
         mWebView.setVerticalScrollBarEnabled(false);
         mWebView.addJavascriptInterface(new InjectorJavaScriptInterface(this), "injector");
@@ -125,9 +133,9 @@ public class BrowserSignInActivity extends BaseActivity {
     private String readOAuthPin(final String html) {
         try {
             OAuthPasswordAuthenticator.OAuthPinData data = new OAuthPasswordAuthenticator.OAuthPinData();
-            OAuthPasswordAuthenticator.readOAuthPINFromHtml(new StringReader(html), data);
-            return data.oauthPin;
-        } catch (final AttoParseException | IOException e) {
+            OAuthPasswordAuthenticator.Companion.readOAuthPINFromHtml(new StringReader(html), data);
+            return data.getOauthPin();
+        } catch (final ParseException | IOException e) {
             Log.w(LOGTAG, e);
         }
         return null;
@@ -215,6 +223,7 @@ public class BrowserSignInActivity extends BaseActivity {
         private final String mConsumerKey, mConsumerSecret;
         private final BrowserSignInActivity mActivity;
         private final String mAPIUrlFormat;
+        private final boolean mSameOAuthSigningUrl;
 
         public GetRequestTokenTask(final BrowserSignInActivity activity) {
             mActivity = activity;
@@ -222,21 +231,23 @@ public class BrowserSignInActivity extends BaseActivity {
             mConsumerKey = intent.getStringExtra(Accounts.CONSUMER_KEY);
             mConsumerSecret = intent.getStringExtra(Accounts.CONSUMER_SECRET);
             mAPIUrlFormat = intent.getStringExtra(Accounts.API_URL_FORMAT);
+            mSameOAuthSigningUrl = intent.getBooleanExtra(Accounts.SAME_OAUTH_SIGNING_URL, true);
         }
 
         @Override
         protected SingleResponse<OAuthToken> doInBackground(final Object... params) {
             if (isEmpty(mConsumerKey) || isEmpty(mConsumerSecret)) {
-                return SingleResponse.getInstance();
+                return new SingleResponse<>();
             }
             try {
-                final Endpoint endpoint = TwitterAPIFactory.getOAuthSignInEndpoint(mAPIUrlFormat, true);
+                final Endpoint endpoint = MicroBlogAPIFactory.getOAuthSignInEndpoint(mAPIUrlFormat,
+                        mSameOAuthSigningUrl);
                 final Authorization auth = new OAuthAuthorization(mConsumerKey, mConsumerSecret);
-                final TwitterOAuth twitter = TwitterAPIFactory.getInstance(mActivity, endpoint,
+                final TwitterOAuth oauth = MicroBlogAPIFactory.getInstance(mActivity, endpoint,
                         auth, TwitterOAuth.class);
-                return SingleResponse.getInstance(twitter.getRequestToken(OAUTH_CALLBACK_OOB));
-            } catch (final TwitterException e) {
-                return SingleResponse.getInstance(e);
+                return new SingleResponse<>(oauth.getRequestToken(OAUTH_CALLBACK_OOB), null, new Bundle());
+            } catch (final MicroBlogException e) {
+                return new SingleResponse<>(null, e, new Bundle());
             }
         }
 
@@ -246,7 +257,7 @@ public class BrowserSignInActivity extends BaseActivity {
             if (result.hasData()) {
                 final OAuthToken token = result.getData();
                 mActivity.setRequestToken(token);
-                final Endpoint endpoint = TwitterAPIFactory.getOAuthSignInEndpoint(mAPIUrlFormat, true);
+                final Endpoint endpoint = MicroBlogAPIFactory.getOAuthSignInEndpoint(mAPIUrlFormat, true);
                 mActivity.loadUrl(endpoint.construct("/oauth/authorize", new String[]{"oauth_token", token.getOauthToken()}));
             } else {
                 if (BuildConfig.DEBUG && result.hasException()) {

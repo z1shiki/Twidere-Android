@@ -7,10 +7,10 @@ android:
     - tools
 
     # The BuildTools version used by your project
-    - build-tools-23.0.2
+    - build-tools-24.0.1
 
     # The SDK version used to compile your project
-    - android-23
+    - android-24
 
     # Additional components
     - extra-google-google_play_services
@@ -24,7 +24,7 @@ android:
 sudo: false
 
 jdk:
-  - openjdk7
+  - oraclejdk8
 
 env:
   global:
@@ -53,7 +53,6 @@ script: ./gradlew build --no-daemon --stacktrace
 
 deploy:
   provider: releases
-  prerelease: true
   api_key:
     secure: WKtKwda3hegqO9QVujdonNoL2ESJUR80WHNq/13wDsbCABo/GNnuqHNYZmml3wAifEKKeCEYfNZRUuHQ8eHs54Lj5BlGRX5i+1LrGhhgnVFQgmrhIv4RJuVQ663kDEh+Jwo4vowJ2mxNDvLvOhfZwxjULPDiknqy6u5PyW3id5M=
   file_glob: true

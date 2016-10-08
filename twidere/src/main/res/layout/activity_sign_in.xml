@@ -32,28 +32,26 @@
         android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/username_password"
+            android:id="@+id/usernamePasswordContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="8dp">
 
             <EditText
-                android:id="@+id/username"
+                android:id="@+id/editUsername"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
                 android:hint="@string/username"
                 android:inputType="textEmailAddress"
                 android:singleLine="true"
                 android:typeface="normal"/>
 
             <EditText
-                android:id="@+id/password"
+                android:id="@+id/editPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:ems="10"
                 android:hint="@string/password"
                 android:inputType="textPassword"
                 android:singleLine="true"
@@ -61,7 +59,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/sign_in_sign_up"
+            android:id="@+id/signInSignUpContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipChildren="false"
@@ -69,7 +67,7 @@
             android:padding="8dp">
 
             <android.support.v7.widget.AppCompatButton
-                android:id="@+id/sign_up"
+                android:id="@+id/signUp"
                 style="?android:buttonStyleSmall"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -78,20 +76,19 @@
                 android:text="@string/register"/>
 
             <android.support.v7.widget.AppCompatButton
-                android:id="@+id/sign_in"
+                android:id="@+id/signIn"
                 style="?android:buttonStyleSmall"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:minHeight="@dimen/element_size_normal"
-                android:onClick="onClick"
                 android:text="@string/sign_in"
                 app:backgroundTint="@color/material_light_green"/>
 
         </LinearLayout>
 
         <Button
-            android:id="@+id/sign_in_method_introduction"
+            android:id="@+id/passwordSignIn"
             style="?android:borderlessButtonStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -99,8 +96,7 @@
             android:clickable="true"
             android:gravity="center_vertical"
             android:minHeight="36dp"
-            android:onClick="onClick"
-            android:text="@string/sign_in_method_introduction_title"
+            android:text="@string/password_sign_in_twitter_only"
             android:textAppearance="?android:textAppearanceSmall"/>
     </LinearLayout>
 </ScrollView>

@@ -45,7 +45,6 @@ import org.mariotaku.twidere.fragment.HomeTimelineFragment;
 import org.mariotaku.twidere.fragment.InteractionsTimelineFragment;
 import org.mariotaku.twidere.fragment.InvalidTabFragment;
 import org.mariotaku.twidere.fragment.MessagesEntriesFragment;
-import org.mariotaku.twidere.fragment.RetweetsOfMeFragment;
 import org.mariotaku.twidere.fragment.StatusesSearchFragment;
 import org.mariotaku.twidere.fragment.TrendsSuggestionsFragment;
 import org.mariotaku.twidere.fragment.UserFavoritesFragment;
@@ -60,6 +59,7 @@ import org.mariotaku.twidere.model.tab.argument.TabArguments;
 import org.mariotaku.twidere.model.tab.argument.TextQueryArguments;
 import org.mariotaku.twidere.model.tab.argument.UserArguments;
 import org.mariotaku.twidere.model.tab.argument.UserListArguments;
+import org.mariotaku.twidere.model.tab.extra.HomeTabExtras;
 import org.mariotaku.twidere.model.tab.extra.InteractionsTabExtras;
 import org.mariotaku.twidere.model.tab.extra.TabExtras;
 import org.mariotaku.twidere.provider.TwidereDataStore.Tabs;
@@ -78,7 +78,10 @@ public class CustomTabUtils implements Constants {
     static {
         CUSTOM_TABS_CONFIGURATION_MAP.put(CustomTabType.HOME_TIMELINE, new CustomTabConfiguration(
                 HomeTimelineFragment.class, R.string.home, R.drawable.ic_action_home,
-                CustomTabConfiguration.ACCOUNT_OPTIONAL, CustomTabConfiguration.FIELD_TYPE_NONE, 0, false));
+                CustomTabConfiguration.ACCOUNT_OPTIONAL, CustomTabConfiguration.FIELD_TYPE_NONE, 0, false,
+                ExtraConfiguration.newBoolean(EXTRA_HIDE_RETWEETS, R.string.hide_retweets, false),
+                ExtraConfiguration.newBoolean(EXTRA_HIDE_QUOTES, R.string.hide_quotes, false),
+                ExtraConfiguration.newBoolean(EXTRA_HIDE_REPLIES, R.string.hide_replies, false)));
 
         CUSTOM_TABS_CONFIGURATION_MAP.put(CustomTabType.NOTIFICATIONS_TIMELINE, new CustomTabConfiguration(
                 InteractionsTimelineFragment.class, R.string.interactions, R.drawable.ic_action_notification,
@@ -87,14 +90,13 @@ public class CustomTabUtils implements Constants {
                 ExtraConfiguration.newBoolean(EXTRA_MENTIONS_ONLY, R.string.mentions_only, false)));
 
         if (BuildConfig.DEBUG) {
-            CUSTOM_TABS_CONFIGURATION_MAP.put(CustomTabType.DIRECT_MESSAGES, new CustomTabConfiguration(
-                    MessagesEntriesFragment.class, R.string.direct_messages, R.drawable.ic_action_message,
-                    CustomTabConfiguration.ACCOUNT_OPTIONAL, CustomTabConfiguration.FIELD_TYPE_NONE, 2, false));
-        } else {
-            CUSTOM_TABS_CONFIGURATION_MAP.put(CustomTabType.DIRECT_MESSAGES, new CustomTabConfiguration(
-                    DirectMessagesFragment.class, R.string.direct_messages, R.drawable.ic_action_message,
+            CUSTOM_TABS_CONFIGURATION_MAP.put(CustomTabType.DIRECT_MESSAGES_NEXT, new CustomTabConfiguration(
+                    MessagesEntriesFragment.class, R.string.direct_messages_next, R.drawable.ic_action_message,
                     CustomTabConfiguration.ACCOUNT_OPTIONAL, CustomTabConfiguration.FIELD_TYPE_NONE, 2, false));
         }
+        CUSTOM_TABS_CONFIGURATION_MAP.put(CustomTabType.DIRECT_MESSAGES, new CustomTabConfiguration(
+                DirectMessagesFragment.class, R.string.direct_messages, R.drawable.ic_action_message,
+                CustomTabConfiguration.ACCOUNT_OPTIONAL, CustomTabConfiguration.FIELD_TYPE_NONE, 2, false));
 
         CUSTOM_TABS_CONFIGURATION_MAP.put(CustomTabType.TRENDS_SUGGESTIONS, new CustomTabConfiguration(
                 TrendsSuggestionsFragment.class, R.string.trends, R.drawable.ic_action_hashtag,
@@ -114,10 +116,6 @@ public class CustomTabUtils implements Constants {
                 UserListTimelineFragment.class, R.string.list_timeline, R.drawable.ic_action_list,
                 CustomTabConfiguration.ACCOUNT_REQUIRED, CustomTabConfiguration.FIELD_TYPE_USER_LIST, 7));
 
-        CUSTOM_TABS_CONFIGURATION_MAP.put(CustomTabType.RETWEETS_OF_ME, new CustomTabConfiguration(
-                RetweetsOfMeFragment.class, R.string.retweets_of_me, R.drawable.ic_action_retweet,
-                CustomTabConfiguration.ACCOUNT_REQUIRED, CustomTabConfiguration.FIELD_TYPE_NONE, 10));
-
         CUSTOM_TABS_ICON_NAME_MAP.put("accounts", R.drawable.ic_action_accounts);
         CUSTOM_TABS_ICON_NAME_MAP.put("hashtag", R.drawable.ic_action_hashtag);
         CUSTOM_TABS_ICON_NAME_MAP.put("heart", R.drawable.ic_action_heart);
@@ -135,6 +133,9 @@ public class CustomTabUtils implements Constants {
         CUSTOM_TABS_ICON_NAME_MAP.put("twidere", R.drawable.ic_action_twidere);
         CUSTOM_TABS_ICON_NAME_MAP.put("twitter", R.drawable.ic_action_twitter);
         CUSTOM_TABS_ICON_NAME_MAP.put("user", R.drawable.ic_action_user);
+    }
+
+    private CustomTabUtils() {
     }
 
     public static String findTabIconKey(final int iconRes) {
@@ -180,6 +181,7 @@ public class CustomTabUtils implements Constants {
             @ReadPositionTag
             final String tag = getTagByType(type);
             args.putInt(EXTRA_TAB_POSITION, position);
+            args.putLong(EXTRA_TAB_ID, cur.getLong(indices.id));
             final TabExtras tabExtras = parseTabExtras(type, cur.getString(idxExtras));
             if (tabExtras != null) {
                 args.putParcelable(EXTRA_EXTRAS, tabExtras);
@@ -207,8 +209,7 @@ public class CustomTabUtils implements Constants {
         switch (type) {
             case CustomTabType.HOME_TIMELINE:
             case CustomTabType.NOTIFICATIONS_TIMELINE:
-            case CustomTabType.DIRECT_MESSAGES:
-            case CustomTabType.RETWEETS_OF_ME: {
+            case CustomTabType.DIRECT_MESSAGES: {
                 return JsonSerializer.parse(json, TabArguments.class);
             }
             case CustomTabType.USER_TIMELINE:
@@ -230,6 +231,9 @@ public class CustomTabUtils implements Constants {
         switch (type) {
             case CustomTabType.NOTIFICATIONS_TIMELINE: {
                 return JsonSerializer.parse(json, InteractionsTabExtras.class);
+            }
+            case CustomTabType.HOME_TIMELINE: {
+                return JsonSerializer.parse(json, HomeTabExtras.class);
             }
         }
         return null;

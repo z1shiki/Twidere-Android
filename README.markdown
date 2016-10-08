@@ -1,8 +1,10 @@
 #Twidere for Android#
 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Twidere-brightgreen.svg?style=flat)](http://android-arsenal.com/details/3/2453)
 [![Travis status](https://api.travis-ci.org/TwidereProject/Twidere-Android.png)](https://travis-ci.org/TwidereProject/Twidere-Android/)
+[![Crowdin](https://d322cqt584bo4o.cloudfront.net/twidere/localized.svg)](https://crowdin.com/project/twidere)
 
-Material Design ready and feature reach Twitter app for Android 4.0+
+Material Design ready and feature rich Twitter app for Android 4.0+
 
 ---
 
@@ -23,8 +25,8 @@ Material Design ready and feature reach Twitter app for Android 4.0+
 * Supports Twitter, Fanfou and GNU social
 * Free, open source, NO ads, forever!
 
-[![Get it on Google Play](http://www.android.com/images/brand/get_it_on_play_logo_large.png)](https://play.google.com/store/apps/details?id=org.mariotaku.twidere)
-[![Get it on F-Droid](https://f-droid.org/wiki/images/0/06/F-Droid-button_get-it-on.png)](https://f-droid.org/repository/browse/?fdid=org.mariotaku.twidere)
+[<img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" alt="Get it on Google Play" height="80">](https://play.google.com/store/apps/details?id=org.mariotaku.twidere)
+[<img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/repository/browse/?fdid=org.mariotaku.twidere)
 
 ---
 
@@ -68,6 +70,8 @@ Bitcoin: `1FHAVAzge7cj1LfCTMfnLL49DgA3mVUCuW`
 [@TwidereProject/donators](https://twitter.com/TwidereProject/lists/donators), if you haven't find your name, please contact @TwidereProject :)
 
 Buy me a ~~bread~~ [game](http://steamcommunity.com/id/mariotaku/wishlist) or anything you want :)
+
+[帮我支付宝账户里随便加点钱](https://twitter.com/xmxsuperstar/status/724094631621750785)
 
 ---
 

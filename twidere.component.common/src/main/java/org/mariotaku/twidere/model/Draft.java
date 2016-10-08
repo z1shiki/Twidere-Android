@@ -27,27 +27,29 @@ import android.support.annotation.StringDef;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelablePlease;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelableThisPlease;
 
+import org.mariotaku.commons.objectcursor.LoganSquareCursorFieldConverter;
 import org.mariotaku.library.objectcursor.annotation.CursorField;
 import org.mariotaku.library.objectcursor.annotation.CursorObject;
 import org.mariotaku.twidere.model.draft.ActionExtra;
 import org.mariotaku.twidere.model.util.DraftExtrasConverter;
-import org.mariotaku.twidere.model.util.LoganSquareCursorFieldConverter;
 import org.mariotaku.twidere.model.util.UserKeysCursorFieldConverter;
+import org.mariotaku.twidere.provider.TwidereDataStore;
 import org.mariotaku.twidere.provider.TwidereDataStore.Drafts;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @ParcelablePlease
-@CursorObject(valuesCreator = true)
+@CursorObject(valuesCreator = true, tableInfo = true)
 public class Draft implements Parcelable {
 
     @ParcelableThisPlease
-    @CursorField(value = Drafts.ACCOUNT_IDS, converter = UserKeysCursorFieldConverter.class)
-    public UserKey[] account_ids;
-    @ParcelableThisPlease
-    @CursorField(value = Drafts._ID, excludeWrite = true)
+    @CursorField(value = Drafts._ID, type = TwidereDataStore.TYPE_PRIMARY_KEY, excludeWrite = true)
     public long _id;
+    @ParcelableThisPlease
+    @CursorField(value = Drafts.ACCOUNT_KEYS, converter = UserKeysCursorFieldConverter.class)
+    @Nullable
+    public UserKey[] account_keys;
     @ParcelableThisPlease
     @CursorField(Drafts.TIMESTAMP)
     public long timestamp;
@@ -85,12 +87,14 @@ public class Draft implements Parcelable {
     }
 
     public static final Creator<Draft> CREATOR = new Creator<Draft>() {
+        @Override
         public Draft createFromParcel(Parcel source) {
             Draft target = new Draft();
             DraftParcelablePlease.readFromParcel(target, source);
             return target;
         }
 
+        @Override
         public Draft[] newArray(int size) {
             return new Draft[size];
         }

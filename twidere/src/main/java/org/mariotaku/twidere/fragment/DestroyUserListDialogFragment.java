@@ -31,7 +31,7 @@ import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.model.ParcelableUserList;
 import org.mariotaku.twidere.util.AsyncTwitterWrapper;
 
-public class DestroyUserListDialogFragment extends BaseSupportDialogFragment implements DialogInterface.OnClickListener {
+public class DestroyUserListDialogFragment extends BaseDialogFragment implements DialogInterface.OnClickListener {
 
     public static final String FRAGMENT_TAG = "destroy_user_list";
 
@@ -40,7 +40,7 @@ public class DestroyUserListDialogFragment extends BaseSupportDialogFragment imp
         switch (which) {
             case DialogInterface.BUTTON_POSITIVE:
                 final ParcelableUserList userList = getUserList();
-                final AsyncTwitterWrapper twitter = mTwitterWrapper;
+                final AsyncTwitterWrapper twitter = twitterWrapper;
                 if (userList == null || twitter == null) return;
                 twitter.destroyUserListAsync(userList.account_key, userList.id);
                 break;

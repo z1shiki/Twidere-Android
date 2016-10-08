@@ -60,6 +60,9 @@ public class ParcelableStatusUpdate implements Parcelable {
     @JsonField(name = "repost_status_id")
     @ParcelableThisPlease
     public String repost_status_id;
+    @JsonField(name = "attachment_url")
+    @ParcelableThisPlease
+    public String attachment_url;
 
     public ParcelableStatusUpdate() {
     }
@@ -89,12 +92,14 @@ public class ParcelableStatusUpdate implements Parcelable {
     }
 
     public static final Creator<ParcelableStatusUpdate> CREATOR = new Creator<ParcelableStatusUpdate>() {
+        @Override
         public ParcelableStatusUpdate createFromParcel(Parcel source) {
             ParcelableStatusUpdate target = new ParcelableStatusUpdate();
             ParcelableStatusUpdateParcelablePlease.readFromParcel(target, source);
             return target;
         }
 
+        @Override
         public ParcelableStatusUpdate[] newArray(int size) {
             return new ParcelableStatusUpdate[size];
         }

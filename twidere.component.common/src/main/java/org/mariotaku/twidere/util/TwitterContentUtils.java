@@ -24,9 +24,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
-import org.mariotaku.twidere.api.twitter.model.Status;
-import org.mariotaku.twidere.api.twitter.model.User;
-import org.mariotaku.twidere.api.twitter.model.UserMentionEntity;
+import org.mariotaku.microblog.library.twitter.model.User;
 import org.mariotaku.twidere.common.R;
 import org.mariotaku.twidere.model.ConsumerKeyType;
 
@@ -37,6 +35,9 @@ import java.util.zip.CRC32;
  * Created by mariotaku on 15/1/11.
  */
 public class TwitterContentUtils {
+
+    private TwitterContentUtils() {
+    }
 
     public static boolean isOfficialKey(final Context context, final String consumerKey,
                                         final String consumerSecret) {

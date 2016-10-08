@@ -27,12 +27,10 @@ import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
 
 import org.apache.commons.lang3.StringUtils;
-import org.attoparser.AttoParseException;
-import org.attoparser.IAttoParser;
-import org.attoparser.markup.MarkupAttoParser;
-import org.attoparser.markup.html.AbstractStandardNonValidatingHtmlAttoHandler;
-import org.attoparser.markup.html.HtmlParsingConfiguration;
-import org.attoparser.markup.html.elements.IHtmlElement;
+import org.attoparser.ParseException;
+import org.attoparser.config.ParseConfiguration;
+import org.attoparser.simple.AbstractSimpleMarkupHandler;
+import org.attoparser.simple.SimpleMarkupParser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,15 +42,17 @@ import java.util.Map;
  */
 public class HtmlSpanBuilder {
 
-    private static final IAttoParser PARSER = new MarkupAttoParser();
+    private static final SimpleMarkupParser PARSER = new SimpleMarkupParser(ParseConfiguration.htmlConfiguration());
 
-    public static Spannable fromHtml(String html) throws ParseException {
-        final HtmlParsingConfiguration conf = new HtmlParsingConfiguration();
-        final HtmlSpanHandler handler = new HtmlSpanHandler(conf);
+    private HtmlSpanBuilder() {
+    }
+
+    public static Spannable fromHtml(String html) throws HtmlParseException {
+        final HtmlSpanHandler handler = new HtmlSpanHandler();
         try {
             PARSER.parse(html, handler);
-        } catch (AttoParseException e) {
-            throw new ParseException(e);
+        } catch (ParseException e) {
+            throw new HtmlParseException(e);
         }
         return handler.getText();
     }
@@ -60,15 +60,19 @@ public class HtmlSpanBuilder {
     public static CharSequence fromHtml(String html, CharSequence fallback) {
         try {
             return fromHtml(html);
-        } catch (ParseException e) {
+        } catch (HtmlParseException e) {
             return fallback;
         }
     }
 
     private static void applyTag(SpannableStringBuilder sb, int start, int end, TagInfo info) {
-        final Object span = createSpan(info);
-        if (span == null) return;
-        sb.setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (info.name.equalsIgnoreCase("br")) {
+            sb.append('\n');
+        } else {
+            final Object span = createSpan(info);
+            if (span == null) return;
+            sb.setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
     }
 
     private static Object createSpan(TagInfo info) {
@@ -99,20 +103,20 @@ public class HtmlSpanBuilder {
         return -1;
     }
 
-    public static class ParseException extends RuntimeException {
-        public ParseException() {
+    public static class HtmlParseException extends RuntimeException {
+        public HtmlParseException() {
             super();
         }
 
-        public ParseException(String detailMessage) {
+        public HtmlParseException(String detailMessage) {
             super(detailMessage);
         }
 
-        public ParseException(String detailMessage, Throwable throwable) {
+        public HtmlParseException(String detailMessage, Throwable throwable) {
             super(detailMessage, throwable);
         }
 
-        public ParseException(Throwable throwable) {
+        public HtmlParseException(Throwable throwable) {
             super(throwable);
         }
     }
@@ -133,23 +137,22 @@ public class HtmlSpanBuilder {
         }
     }
 
-    static class HtmlSpanHandler extends AbstractStandardNonValidatingHtmlAttoHandler {
+    static class HtmlSpanHandler extends AbstractSimpleMarkupHandler {
         private final SpannableStringBuilder sb;
         List<TagInfo> tagInfo;
 
-        public HtmlSpanHandler(HtmlParsingConfiguration conf) {
-            super(conf);
-            this.sb = new SpannableStringBuilder();
+        public HtmlSpanHandler() {
+            sb = new SpannableStringBuilder();
             tagInfo = new ArrayList<>();
         }
 
         @Override
-        public void handleText(char[] buffer, int offset, int len, int line, int col) throws AttoParseException {
+        public void handleText(char[] buffer, int offset, int len, int line, int col) {
             sb.append(HtmlEscapeHelper.unescape(new String(buffer, offset, len)));
         }
 
         @Override
-        public void handleHtmlCloseElement(IHtmlElement element, String elementName, int line, int col) throws AttoParseException {
+        public void handleCloseElement(String elementName, int line, int col) {
             final int lastIndex = lastIndexOfTag(tagInfo, elementName);
             if (lastIndex != -1) {
                 TagInfo info = tagInfo.get(lastIndex);
@@ -159,7 +162,7 @@ public class HtmlSpanBuilder {
         }
 
         @Override
-        public void handleHtmlOpenElement(IHtmlElement element, String elementName, Map<String, String> attributes, int line, int col) throws AttoParseException {
+        public void handleOpenElement(String elementName, Map<String, String> attributes, int line, int col) {
             tagInfo.add(new TagInfo(sb.length(), elementName, attributes));
         }
 

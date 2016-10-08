@@ -37,14 +37,7 @@ public class LinkCreator implements Constants {
     private static final String AUTHORITY_TWITTER = "twitter.com";
     private static final String AUTHORITY_FANFOU = "fanfou.com";
 
-    public static Uri getTwitterStatusLink(String screenName, String statusId) {
-        Uri.Builder builder = new Uri.Builder();
-        builder.scheme(SCHEME_HTTPS);
-        builder.authority(AUTHORITY_TWITTER);
-        builder.appendPath(screenName);
-        builder.appendPath("status");
-        builder.appendPath(statusId);
-        return builder.build();
+    private LinkCreator() {
     }
 
     public static Uri getTwidereStatusLink(UserKey accountKey, @NonNull String statusId) {
@@ -58,7 +51,7 @@ public class LinkCreator implements Constants {
         return builder.build();
     }
 
-    public static Uri getTwidereUserLink(@Nullable UserKey accountKey,@Nullable UserKey userKey, String screenName) {
+    public static Uri getTwidereUserLink(@Nullable UserKey accountKey, @Nullable UserKey userKey, String screenName) {
         final Uri.Builder builder = new Uri.Builder();
         builder.scheme(SCHEME_TWIDERE);
         builder.authority(AUTHORITY_USER);
@@ -83,14 +76,7 @@ public class LinkCreator implements Constants {
         return builder.build();
     }
 
-    public static Uri getTwitterUserLink(String screenName) {
-        Uri.Builder builder = new Uri.Builder();
-        builder.scheme(SCHEME_HTTPS);
-        builder.authority(AUTHORITY_TWITTER);
-        builder.appendPath(screenName);
-        return builder.build();
-    }
-
+    @NonNull
     public static Uri getStatusWebLink(ParcelableStatus status) {
         if (status.extras != null && !TextUtils.isEmpty(status.extras.external_url)) {
             return Uri.parse(status.extras.external_url);
@@ -101,23 +87,21 @@ public class LinkCreator implements Constants {
         return getTwitterStatusLink(status.user_screen_name, status.id);
     }
 
-    private static Uri getFanfouStatusLink(String id) {
-        Uri.Builder builder = new Uri.Builder();
-        builder.scheme(SCHEME_HTTP);
-        builder.authority(AUTHORITY_FANFOU);
-        builder.appendPath("statuses");
-        builder.appendPath(id);
-        return builder.build();
+    public static Uri getQuotedStatusWebLink(ParcelableStatus status) {
+        if (status.extras != null) {
+            if (!TextUtils.isEmpty(status.extras.quoted_external_url)) {
+                return Uri.parse(status.extras.quoted_external_url);
+            } else if (!TextUtils.isEmpty(status.extras.external_url)) {
+                return Uri.parse(status.extras.external_url);
+            }
+        }
+        if (USER_TYPE_FANFOU_COM.equals(status.account_key.getHost())) {
+            return getFanfouStatusLink(status.quoted_id);
+        }
+        return getTwitterStatusLink(status.quoted_user_screen_name, status.quoted_id);
     }
 
-    private static Uri getFanfouUserLink(String id) {
-        Uri.Builder builder = new Uri.Builder();
-        builder.scheme(SCHEME_HTTP);
-        builder.authority(AUTHORITY_FANFOU);
-        builder.appendPath(id);
-        return builder.build();
-    }
-
+    @NonNull
     public static Uri getUserWebLink(@NonNull ParcelableUser user) {
         if (user.extras != null && user.extras.statusnet_profile_url != null) {
             return Uri.parse(user.extras.statusnet_profile_url);
@@ -126,5 +110,41 @@ public class LinkCreator implements Constants {
             return getFanfouUserLink(user.key.getId());
         }
         return getTwitterUserLink(user.screen_name);
+    }
+
+    @NonNull
+    static Uri getTwitterStatusLink(@NonNull String screenName, @NonNull String statusId) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme(SCHEME_HTTPS);
+        builder.authority(AUTHORITY_TWITTER);
+        builder.appendPath(screenName);
+        builder.appendPath("status");
+        builder.appendPath(statusId);
+        return builder.build();
+    }
+
+    static Uri getTwitterUserLink(String screenName) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme(SCHEME_HTTPS);
+        builder.authority(AUTHORITY_TWITTER);
+        builder.appendPath(screenName);
+        return builder.build();
+    }
+
+    static Uri getFanfouStatusLink(String id) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme(SCHEME_HTTP);
+        builder.authority(AUTHORITY_FANFOU);
+        builder.appendPath("statuses");
+        builder.appendPath(id);
+        return builder.build();
+    }
+
+    static Uri getFanfouUserLink(String id) {
+        Uri.Builder builder = new Uri.Builder();
+        builder.scheme(SCHEME_HTTP);
+        builder.authority(AUTHORITY_FANFOU);
+        builder.appendPath(id);
+        return builder.build();
     }
 }

@@ -27,6 +27,7 @@ import android.content.DialogInterface.OnMultiChoiceClickListener;
 import android.content.DialogInterface.OnShowListener;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AlertDialog;
 import android.util.SparseBooleanArray;
@@ -43,7 +44,7 @@ import org.mariotaku.twidere.adapter.ArrayAdapter;
 import org.mariotaku.twidere.fragment.iface.ISupportDialogFragmentCallback;
 import org.mariotaku.twidere.util.DataImportExportUtils;
 
-public final class DataExportImportTypeSelectorDialogFragment extends BaseSupportDialogFragment implements
+public final class DataExportImportTypeSelectorDialogFragment extends BaseDialogFragment implements
         OnMultiChoiceClickListener, OnClickListener, OnShowListener, OnItemClickListener {
 
     private TypeAdapter mAdapter;
@@ -192,7 +193,7 @@ public final class DataExportImportTypeSelectorDialogFragment extends BaseSuppor
         }
 
         @Override
-        public View getView(final int position, final View convertView, final ViewGroup parent) {
+        public View getView(final int position, @Nullable final View convertView, final ViewGroup parent) {
             final View view = super.getView(position, convertView, parent);
             final TextView text1 = (TextView) view.findViewById(android.R.id.text1);
             text1.setText(getItem(position).title);

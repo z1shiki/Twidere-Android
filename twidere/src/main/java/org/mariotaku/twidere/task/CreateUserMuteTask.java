@@ -7,11 +7,11 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.User;
 import org.mariotaku.sqliteqb.library.Expression;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.User;
 import org.mariotaku.twidere.model.ParcelableCredentials;
 import org.mariotaku.twidere.model.ParcelableUser;
 import org.mariotaku.twidere.model.message.FriendshipTaskEvent;
@@ -20,6 +20,8 @@ import org.mariotaku.twidere.provider.TwidereDataStore.Activities;
 import org.mariotaku.twidere.provider.TwidereDataStore.CachedRelationships;
 import org.mariotaku.twidere.provider.TwidereDataStore.Statuses;
 import org.mariotaku.twidere.util.Utils;
+
+import static org.mariotaku.twidere.constant.SharedPreferenceConstants.KEY_NAME_FIRST;
 
 /**
  * Created by mariotaku on 16/3/11.
@@ -31,13 +33,13 @@ public class CreateUserMuteTask extends AbsFriendshipOperationTask {
 
     @NonNull
     @Override
-    protected User perform(@NonNull Twitter twitter, @NonNull ParcelableCredentials credentials,
-                           @NonNull Arguments args) throws TwitterException {
+    protected User perform(@NonNull MicroBlog twitter, @NonNull ParcelableCredentials credentials,
+                           @NonNull Arguments args) throws MicroBlogException {
         return twitter.createMute(args.userKey.getId());
     }
 
     @Override
-    protected void succeededWorker(@NonNull Twitter twitter,
+    protected void succeededWorker(@NonNull MicroBlog twitter,
                                    @NonNull ParcelableCredentials credentials,
                                    @NonNull Arguments args, @NonNull ParcelableUser user) {
         final ContentResolver resolver = context.getContentResolver();

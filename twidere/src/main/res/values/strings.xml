@@ -293,6 +293,7 @@
     <string name="notification_direct_message_multiple_users"><xliff:g id="user">%1$s</xliff:g> and <xliff:g id="users_count">%2$d</xliff:g> others sent you <xliff:g id="messages_count">%3$d</xliff:g> direct messages.</string>
     <string name="action_getting_status">getting tweet</string>
     <string name="action_updating_status">sending tweet</string>
+    <string name="action_getting_user_lists">getting user lists</string>
     <string name="action_sending_direct_message">sending direct message</string>
     <string name="action_refreshing_home_timeline">refreshing home timeline</string>
     <string name="action_refreshing_mentions">refreshing mentions</string>
@@ -303,6 +304,7 @@
     <string name="action_updating_profile">updating profile</string>
     <string name="action_updating_profile_image">updating profile image</string>
     <string name="action_updating_profile_banner_image">updating profile header image</string>
+    <string name="action_updating_profile_background_image">updating profile background image</string>
     <string name="action_removing_profile_banner_image">removing profile header image</string>
     <string name="action_updating_details">updating details</string>
     <string name="action_blocking">blocking</string>
@@ -311,6 +313,7 @@
     <string name="action_unfollowing">unfollowing</string>
     <string name="action_creating_list">creating list</string>
     <string name="action_adding_member">adding member</string>
+    <string name="action_modifying_lists">modifying lists</string>
     <string name="action_signing_in">signing in</string>
     <string name="action_retweeting">retweeting</string>
     <string name="action_reporting_for_spam">reporting for spam</string>
@@ -588,6 +591,7 @@
     <string name="function">Function</string>
     <string name="replies">Replies</string>
     <string name="profile_banner">Profile banner</string>
+    <string name="profile_background">Profile background</string>
     <string name="profile">Profile</string>
     <string name="listed">Listed</string>
     <string name="state_blocking">Blocking</string>
@@ -688,6 +692,7 @@
     <string name="invalid_list_name">Must start with a letter and can consist only letters, numbers, \"-\", or \"_\".</string>
     <string name="delete_conversation">Delete conversation</string>
     <string name="delete_conversation_confirm_message">Delete all messages of this conversation?</string>
+    <string name="delete_message_confirm_message">Delete this message?</string>
     <string name="name_first_summary_on">Display name first</string>
     <string name="name_first_summary_off">Display \@screenname first</string>
     <string name="comment_hint">Comment…</string>
@@ -722,6 +727,7 @@
     <string name="combined_notifications_summary_on">Notifications will be grouped</string>
     <string name="combined_notifications_summary_off">Notifications will be displayed separately</string>
     <string name="save_media_no_storage_permission_message">Storage permission is needed to save media.</string>
+    <string name="share_media_no_storage_permission_message">Some application requires storage permission to share media.</string>
     <string name="select_file_no_storage_permission_message">Storage permission is needed to select file.</string>
     <string name="user_mentioned_you"><xliff:g id="name">%s</xliff:g> mentioned you</string>
     <string name="cant_load_all_replies_message">Can\'t load all replies. &lt;a href=\"#dialog\";&gt;Why?&lt;/a&gt;</string>
@@ -779,11 +785,34 @@
     <string name="provider_default">Twidere</string>
     <!-- Fanfou is a Chinese micro blogging website http://fanfou.com/ -->
     <string name="provider_fanfou">Fanfou</string>
+    <string name="provider_quitter_se">Quitter.se</string>
+    <string name="provider_loadaverage_org">LoadAverage.org</string>
+    <string name="provider_gnusocial_net">GNU Social.net</string>
+    <string name="provider_gnusocial_de">GNU Social.de</string>
     <string name="new_document_api">New Document API</string>
-    <string name="new_document_api_summary">Open profile and media in new task</string>
+    <string name="new_document_api_summary">Open profile and media in new currentTask</string>
     <string name="drawer_toggle">Drawer toggle</string>
     <!-- GNU social group like https://quitter.se/group/qvitter -->
     <string name="group">Group</string>
     <string name="your_coarse_location">Your coarse location</string>
     <string name="location_countrywide">Countrywide</string>
+    <string name="error_title_device_incompatible">Incompatible device</string>
+    <string name="error_message_device_incompatible">This device is not compatible with Twidere, upgrade to latest Android OS is recommended.\nYou can send information below to help me report this issue to device manufacturer.</string>
+    <string name="password_sign_in_twitter_only">Password sign in (Twitter only)</string>
+    <string name="direct_messages_next">DM next</string>
+    <string name="plus_service_name">Twidere ∞</string>
+    <string name="sign_in_service_google_id">Google ID</string>
+    <string name="sign_in_service_twitter">Twitter</string>
+    <string name="sign_in_service_email">Email</string>
+    <string name="sign_in_with_ellip">Sign in with…</string>
+    <string name="edit_description">Edit description</string>
+    <string name="no_status_content_text">No content</string>
+    <string name="status_not_available_text">Tweet not available</string>
+    <string name="share_link">Share link</string>
+    <string name="hide_retweets">Hide retweets</string>
+    <string name="hide_quotes">Hide quotes</string>
+    <string name="hide_replies">Hide replies</string>
+    <string name="no_extension_installed">No extension installed</string>
+    <string name="pinned_status">Pinned tweet</string>
+    <string name="add_or_remove_from_list">Add or remove from list</string>
 </resources>

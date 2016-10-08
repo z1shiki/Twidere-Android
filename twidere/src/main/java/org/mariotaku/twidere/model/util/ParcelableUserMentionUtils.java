@@ -1,7 +1,7 @@
 package org.mariotaku.twidere.model.util;
 
-import org.mariotaku.twidere.api.twitter.model.User;
-import org.mariotaku.twidere.api.twitter.model.UserMentionEntity;
+import org.mariotaku.microblog.library.twitter.model.User;
+import org.mariotaku.microblog.library.twitter.model.UserMentionEntity;
 import org.mariotaku.twidere.model.ParcelableUserMention;
 import org.mariotaku.twidere.model.UserKey;
 
@@ -9,6 +9,9 @@ import org.mariotaku.twidere.model.UserKey;
  * Created by mariotaku on 16/3/7.
  */
 public class ParcelableUserMentionUtils {
+    private ParcelableUserMentionUtils() {
+    }
+
     public static ParcelableUserMention fromMentionEntity(final User user,
                                                           final UserMentionEntity entity) {
         ParcelableUserMention obj = new ParcelableUserMention();

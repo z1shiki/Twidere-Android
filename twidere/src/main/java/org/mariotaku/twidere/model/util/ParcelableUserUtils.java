@@ -3,16 +3,17 @@ package org.mariotaku.twidere.model.util;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.Pair;
 import android.text.TextUtils;
 
+import org.mariotaku.microblog.library.twitter.model.UrlEntity;
+import org.mariotaku.microblog.library.twitter.model.User;
 import org.mariotaku.twidere.TwidereConstants;
-import org.mariotaku.twidere.api.twitter.model.UrlEntity;
-import org.mariotaku.twidere.api.twitter.model.User;
 import org.mariotaku.twidere.model.ParcelableAccount;
 import org.mariotaku.twidere.model.ParcelableUser;
+import org.mariotaku.twidere.model.SpanItem;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.provider.TwidereDataStore.DirectMessages;
-import org.mariotaku.twidere.util.HtmlEscapeHelper;
 import org.mariotaku.twidere.util.InternalTwitterContentUtils;
 import org.mariotaku.twidere.util.ParseUtils;
 import org.mariotaku.twidere.util.TwitterContentUtils;
@@ -24,6 +25,8 @@ import org.mariotaku.twidere.util.UserColorNameManager;
  * Created by mariotaku on 16/2/24.
  */
 public class ParcelableUserUtils implements TwidereConstants {
+    private ParcelableUserUtils() {
+    }
 
     public static ParcelableUser fromUser(@NonNull User user, @Nullable UserKey accountKey) {
         return fromUser(user, accountKey, 0);
@@ -41,9 +44,11 @@ public class ParcelableUserUtils implements TwidereConstants {
         obj.name = user.getName();
         obj.screen_name = user.getScreenName();
         obj.description_plain = user.getDescription();
-        obj.description_html = InternalTwitterContentUtils.formatUserDescription(user);
-        obj.description_expanded = InternalTwitterContentUtils.formatExpandedUserDescription(user);
-        obj.description_unescaped = HtmlEscapeHelper.toPlainText(obj.description_html);
+        final Pair<String, SpanItem[]> userDescription = InternalTwitterContentUtils.formatUserDescription(user);
+        if (userDescription != null) {
+            obj.description_unescaped = userDescription.first;
+            obj.description_spans = userDescription.second;
+        }
         obj.location = user.getLocation();
         obj.profile_image_url = TwitterContentUtils.getProfileImageUrl(user);
         obj.profile_banner_url = user.getProfileBannerImageUrl();
@@ -71,12 +76,14 @@ public class ParcelableUserUtils implements TwidereConstants {
 
         ParcelableUser.Extras extras = new ParcelableUser.Extras();
         extras.ostatus_uri = user.getOstatusUri();
-        extras.statusnet_blocking = user.isStatusnetBlocking();
-        extras.statusnet_blocked_by = user.isBlocksYou();
-        extras.statusnet_followed_by = user.isFollowsYou();
+        extras.blocking = user.isBlocking();
+        extras.blocked_by = user.isBlockedBy();
+        extras.followed_by = user.isFollowedBy();
+        extras.muting = user.isMuting();
         extras.statusnet_profile_url = user.getStatusnetProfileUrl();
         extras.profile_image_url_original = user.getProfileImageUrlOriginal();
         extras.profile_image_url_profile_size = user.getProfileImageUrlProfileSize();
+        extras.pinned_status_ids = user.getPinnedTweetIds();
         if (extras.profile_image_url_profile_size == null) {
             extras.profile_image_url_profile_size = user.getProfileImageUrlLarge();
         }
@@ -126,5 +133,15 @@ public class ParcelableUserUtils implements TwidereConstants {
         user.account_color = account.color;
         user.color = manager.getUserColor(user.key);
         user.nickname = manager.getUserNickname(user.key);
+    }
+
+    public static String getExpandedDescription(ParcelableUser user) {
+        if (TextUtils.isEmpty(user.description_unescaped)) {
+            return user.description_plain;
+        }
+        if (user.description_spans != null) {
+            // TODO expand description
+        }
+        return user.description_unescaped;
     }
 }

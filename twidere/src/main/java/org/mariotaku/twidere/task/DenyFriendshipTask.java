@@ -4,16 +4,18 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.User;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.User;
 import org.mariotaku.twidere.model.ParcelableAccount;
 import org.mariotaku.twidere.model.ParcelableCredentials;
 import org.mariotaku.twidere.model.ParcelableUser;
 import org.mariotaku.twidere.model.message.FriendshipTaskEvent;
 import org.mariotaku.twidere.model.util.ParcelableAccountUtils;
 import org.mariotaku.twidere.util.Utils;
+
+import static org.mariotaku.twidere.constant.SharedPreferenceConstants.KEY_NAME_FIRST;
 
 /**
  * Created by mariotaku on 16/3/11.
@@ -26,7 +28,7 @@ public class DenyFriendshipTask extends AbsFriendshipOperationTask {
 
     @NonNull
     @Override
-    protected User perform(@NonNull Twitter twitter, @NonNull ParcelableCredentials credentials, @NonNull Arguments args) throws TwitterException {
+    protected User perform(@NonNull MicroBlog twitter, @NonNull ParcelableCredentials credentials, @NonNull Arguments args) throws MicroBlogException {
         switch (ParcelableAccountUtils.getAccountType(credentials)) {
             case ParcelableAccount.Type.FANFOU: {
                 return twitter.denyFanfouFriendship(args.userKey.getId());
@@ -36,7 +38,7 @@ public class DenyFriendshipTask extends AbsFriendshipOperationTask {
     }
 
     @Override
-    protected void succeededWorker(@NonNull Twitter twitter, @NonNull ParcelableCredentials credentials, @NonNull Arguments args, @NonNull ParcelableUser user) {
+    protected void succeededWorker(@NonNull MicroBlog twitter, @NonNull ParcelableCredentials credentials, @NonNull Arguments args, @NonNull ParcelableUser user) {
         Utils.setLastSeen(context, user.key, -1);
     }
 

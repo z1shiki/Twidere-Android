@@ -49,6 +49,7 @@ public interface IntentConstants {
     String INTENT_ACTION_COMPOSE_PICK_IMAGE = INTENT_PACKAGE_PREFIX + "COMPOSE_PICK_IMAGE";
     String INTENT_ACTION_HIDDEN_SETTINGS_ENTRY = INTENT_PACKAGE_PREFIX + "HIDDEN_SETTINGS_ENTRY";
     String INTENT_ACTION_EMOJI_SUPPORT_ABOUT = INTENT_PACKAGE_PREFIX + "EMOJI_SUPPORT_ABOUT";
+    String INTENT_ACTION_PLUS_SERVICE_SIGN_IN = INTENT_PACKAGE_PREFIX + "PLUS_SERVICE_SIGN_IN";
 
     String INTENT_ACTION_EXTENSION_EDIT_IMAGE = INTENT_PACKAGE_PREFIX + "EXTENSION_EDIT_IMAGE";
     String INTENT_ACTION_EXTENSION_UPLOAD = INTENT_PACKAGE_PREFIX + "EXTENSION_UPLOAD";
@@ -68,7 +69,6 @@ public interface IntentConstants {
     String INTENT_ACTION_SEND_DIRECT_MESSAGE = INTENT_PACKAGE_PREFIX + "SEND_DIRECT_MESSAGE";
     String INTENT_ACTION_DISCARD_DRAFT = INTENT_PACKAGE_PREFIX + "DISCARD_DRAFT";
     String INTENT_ACTION_SEND_DRAFT = INTENT_PACKAGE_PREFIX + "SEND_DRAFT";
-    String INTENT_ACTION_PICK_ACTIVITY = "org.mariotaku.twidere.PICK_ACTIVITY";
 
     String INTENT_ACTION_PEBBLE_NOTIFICATION = "com.getpebble.action.SEND_NOTIFICATION";
 
@@ -94,6 +94,7 @@ public interface IntentConstants {
     String EXTRA_URI_ORIG = "uri_orig";
     String EXTRA_MENTIONS = "mentions";
     String EXTRA_ACCOUNT_KEY = "account_key";
+    String EXTRA_ACCOUNT_HOST = "account_host";
     String EXTRA_ACCOUNT_KEYS = "account_keys";
     String EXTRA_PAGE = "page";
     String EXTRA_DATA = "data";
@@ -144,6 +145,7 @@ public interface IntentConstants {
     String EXTRA_USERS = "users";
     String EXTRA_ITEMS = "items";
     String EXTRA_USER_LIST = "user_list";
+    String EXTRA_USER_LISTS = "user_lists";
     String EXTRA_APPEND_TEXT = "append_text";
     String EXTRA_NAME = "name";
     String EXTRA_POSITION = "position";
@@ -155,6 +157,7 @@ public interface IntentConstants {
     String EXTRA_IMAGE_URI = "image_uri";
     String EXTRA_ACTIVATED_ONLY = "activated_only";
     String EXTRA_TAB_POSITION = "tab_position";
+    String EXTRA_TAB_ID = "tab_id";
     String EXTRA_OAUTH_VERIFIER = "oauth_verifier";
     String EXTRA_REQUEST_TOKEN = "request_token";
     String EXTRA_REQUEST_TOKEN_SECRET = "request_token_secret";
@@ -192,11 +195,14 @@ public interface IntentConstants {
     String EXTRA_CURRENT_MEDIA = "current_media";
     String EXTRA_EXTRAS = "extras";
     String EXTRA_MY_FOLLOWING_ONLY = "my_following_only";
+    String EXTRA_HIDE_RETWEETS = "hide_retweets";
+    String EXTRA_HIDE_QUOTES = "hide_quotes";
+    String EXTRA_HIDE_REPLIES = "hide_replies";
     String EXTRA_MENTIONS_ONLY = "mentions_only";
-    String EXTRA_CHANGED = "changed";
-    String EXTRA_NOTIFY_CHANGE = "notify_change";
     String EXTRA_RESTART_ACTIVITY = "restart_activity";
     String EXTRA_RECREATE_ACTIVITY = "recreate_activity";
+    String EXTRA_SHOULD_RECREATE = "should_recreate";
+    String EXTRA_SHOULD_RESTART = "should_restart";
     String EXTRA_FROM_USER = "from_user";
     String EXTRA_SHOW_MEDIA_PREVIEW = "show_media_preview";
     String EXTRA_SHOW_EXTRA_TYPE = "show_extra_type";
@@ -206,9 +212,12 @@ public interface IntentConstants {
     String EXTRA_NEW_DOCUMENT = "new_document";
     String EXTRA_MAKE_GAP = "make_gap";
     String EXTRA_QUOTE_ORIGINAL_STATUS = "quote_original_status";
-    String EXTRA_KEY = "key";
     String EXTRA_CARD = "card";
     String EXTRA_IS_POSSIBLY_SENSITIVE = "is_possibly_sensitive";
     String EXTRA_REFERRAL = "referral";
     String EXTRA_LOADING_MORE = "loading_more";
+    String EXTRA_PINNED_STATUS_IDS = "pinned_status_ids";
+    String EXTRA_SHOULD_INIT_LOADER = "should_init_loader";
+    String EXTRA_START_INTENT = "start_intent";
+    String EXTRA_SELECT_ONLY_ITEM = "select_only_item";
 }

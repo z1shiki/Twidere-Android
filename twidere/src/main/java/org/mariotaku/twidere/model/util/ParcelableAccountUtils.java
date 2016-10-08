@@ -23,6 +23,9 @@ import java.util.List;
  */
 public class ParcelableAccountUtils {
 
+    private ParcelableAccountUtils() {
+    }
+
     public static UserKey[] getAccountKeys(@NonNull ParcelableAccount[] accounts) {
         UserKey[] ids = new UserKey[accounts.length];
         for (int i = 0, j = accounts.length; i < j; i++) {
@@ -57,7 +60,7 @@ public class ParcelableAccountUtils {
 
     public static ParcelableAccount[] getAccounts(@NonNull final Context context) {
         final Cursor cur = context.getContentResolver().query(Accounts.CONTENT_URI,
-                Accounts.COLUMNS_NO_CREDENTIALS, null, null, null);
+                Accounts.COLUMNS_NO_CREDENTIALS, null, null, Accounts.SORT_POSITION);
         if (cur == null) return new ParcelableAccount[0];
         return getAccounts(cur, new ParcelableAccountCursorIndices(cur));
     }

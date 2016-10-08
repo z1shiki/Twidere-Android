@@ -19,6 +19,7 @@
 
 package org.mariotaku.twidere.util;
 
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -35,6 +36,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
+import org.mariotaku.commons.logansquare.LoganSquareMapperFinder;
 import org.mariotaku.library.objectcursor.ObjectCursor;
 import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.annotation.Preference;
@@ -443,6 +445,7 @@ public class DataImportExportUtils implements Constants {
             this.supportedMap = getSupportedPreferencesMap(cls);
         }
 
+        @SuppressLint("SwitchIntDef")
         @Override
         public boolean importValue(JsonParser jsonParser, String key, SharedPreferences.Editor editor) throws IOException {
             final JsonToken token = jsonParser.nextToken();
@@ -477,6 +480,7 @@ public class DataImportExportUtils implements Constants {
             return true;
         }
 
+        @SuppressLint("SwitchIntDef")
         @Override
         public boolean exportValue(JsonGenerator jsonGenerator, String key, SharedPreferences preferences) throws IOException {
             final Preference preference = supportedMap.get(key);

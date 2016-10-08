@@ -7,11 +7,12 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.User;
 import org.mariotaku.sqliteqb.library.Expression;
+import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.User;
 import org.mariotaku.twidere.model.ParcelableAccount;
 import org.mariotaku.twidere.model.ParcelableCredentials;
 import org.mariotaku.twidere.model.ParcelableUser;
@@ -26,15 +27,15 @@ import org.mariotaku.twidere.util.Utils;
 /**
  * Created by mariotaku on 16/3/11.
  */
-public class CreateUserBlockTask extends AbsFriendshipOperationTask {
+public class CreateUserBlockTask extends AbsFriendshipOperationTask implements Constants {
     public CreateUserBlockTask(Context context) {
         super(context, FriendshipTaskEvent.Action.BLOCK);
     }
 
     @NonNull
     @Override
-    protected User perform(@NonNull Twitter twitter, @NonNull ParcelableCredentials credentials,
-                           @NonNull Arguments args) throws TwitterException {
+    protected User perform(@NonNull MicroBlog twitter, @NonNull ParcelableCredentials credentials,
+                           @NonNull Arguments args) throws MicroBlogException {
         switch (ParcelableAccountUtils.getAccountType(credentials)) {
             case ParcelableAccount.Type.FANFOU: {
                 return twitter.createFanfouBlock(args.userKey.getId());
@@ -44,7 +45,7 @@ public class CreateUserBlockTask extends AbsFriendshipOperationTask {
     }
 
     @Override
-    protected void succeededWorker(@NonNull Twitter twitter,
+    protected void succeededWorker(@NonNull MicroBlog twitter,
                                    @NonNull ParcelableCredentials credentials,
                                    @NonNull Arguments args, @NonNull ParcelableUser user) {
         final ContentResolver resolver = context.getContentResolver();

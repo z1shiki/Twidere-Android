@@ -31,7 +31,7 @@ import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.util.AsyncTwitterWrapper;
 
-public class DestroySavedSearchDialogFragment extends BaseSupportDialogFragment implements
+public class DestroySavedSearchDialogFragment extends BaseDialogFragment implements
         DialogInterface.OnClickListener {
 
     public static final String FRAGMENT_TAG = "destroy_saved_search";
@@ -42,8 +42,8 @@ public class DestroySavedSearchDialogFragment extends BaseSupportDialogFragment 
             case DialogInterface.BUTTON_POSITIVE:
                 final UserKey accountKey = getAccountKey();
                 final long searchId = getSearchId();
-                final AsyncTwitterWrapper twitter = mTwitterWrapper;
-                if (searchId <= 0 || twitter == null) return;
+                final AsyncTwitterWrapper twitter = twitterWrapper;
+                if (searchId <= 0) return;
                 twitter.destroySavedSearchAsync(accountKey, searchId);
                 break;
             default:

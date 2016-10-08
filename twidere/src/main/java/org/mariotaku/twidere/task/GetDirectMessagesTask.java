@@ -9,23 +9,23 @@ import com.squareup.otto.Bus;
 
 import org.apache.commons.lang3.math.NumberUtils;
 import org.mariotaku.abstask.library.AbstractTask;
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.DirectMessage;
+import org.mariotaku.microblog.library.twitter.model.ErrorInfo;
+import org.mariotaku.microblog.library.twitter.model.Paging;
+import org.mariotaku.microblog.library.twitter.model.ResponseList;
 import org.mariotaku.twidere.BuildConfig;
 import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.TwidereConstants;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterErrorCode;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.DirectMessage;
-import org.mariotaku.twidere.api.twitter.model.Paging;
-import org.mariotaku.twidere.api.twitter.model.ResponseList;
 import org.mariotaku.twidere.model.RefreshTaskParam;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.model.message.GetMessagesTaskEvent;
 import org.mariotaku.twidere.util.AsyncTwitterWrapper;
 import org.mariotaku.twidere.util.ContentValuesCreator;
 import org.mariotaku.twidere.util.ErrorInfoStore;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 import org.mariotaku.twidere.util.SharedPreferencesWrapper;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
 import org.mariotaku.twidere.util.TwitterWrapper;
 import org.mariotaku.twidere.util.UriUtils;
 import org.mariotaku.twidere.util.content.ContentResolverUtils;
@@ -55,8 +55,8 @@ public abstract class GetDirectMessagesTask extends AbstractTask<RefreshTaskPara
         GeneralComponentHelper.build(context).inject(this);
     }
 
-    public abstract ResponseList<DirectMessage> getDirectMessages(Twitter twitter, Paging paging)
-            throws TwitterException;
+    public abstract ResponseList<DirectMessage> getDirectMessages(MicroBlog twitter, Paging paging)
+            throws MicroBlogException;
 
     protected abstract Uri getDatabaseUri();
 
@@ -70,7 +70,7 @@ public abstract class GetDirectMessagesTask extends AbstractTask<RefreshTaskPara
         int idx = 0;
         final int loadItemLimit = preferences.getInt(KEY_LOAD_ITEM_LIMIT, DEFAULT_LOAD_ITEM_LIMIT);
         for (final UserKey accountKey : accountKeys) {
-            final Twitter twitter = TwitterAPIFactory.getTwitterInstance(context, accountKey, true);
+            final MicroBlog twitter = MicroBlogAPIFactory.getInstance(context, accountKey, true);
             if (twitter == null) continue;
             try {
                 final Paging paging = new Paging();
@@ -97,8 +97,8 @@ public abstract class GetDirectMessagesTask extends AbstractTask<RefreshTaskPara
                 result.add(new TwitterWrapper.MessageListResponse(accountKey, maxId, sinceId, messages));
                 storeMessages(accountKey, messages, isOutgoing(), true);
                 errorInfoStore.remove(ErrorInfoStore.KEY_DIRECT_MESSAGES, accountKey);
-            } catch (final TwitterException e) {
-                if (e.getErrorCode() == TwitterErrorCode.NO_DM_PERMISSION) {
+            } catch (final MicroBlogException e) {
+                if (e.getErrorCode() == ErrorInfo.NO_DIRECT_MESSAGE_PERMISSION) {
                     errorInfoStore.put(ErrorInfoStore.KEY_DIRECT_MESSAGES, accountKey,
                             ErrorInfoStore.CODE_NO_DM_PERMISSION);
                 } else if (e.isCausedByNetworkIssue()) {
@@ -145,7 +145,7 @@ public abstract class GetDirectMessagesTask extends AbstractTask<RefreshTaskPara
     }
 
     @Override
-    protected void afterExecute(List<TwitterWrapper.MessageListResponse> result) {
+    protected void afterExecute(Object callback, List<TwitterWrapper.MessageListResponse> result) {
         bus.post(new GetMessagesTaskEvent(getDatabaseUri(), false, AsyncTwitterWrapper.getException(result)));
     }
 }

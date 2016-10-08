@@ -36,19 +36,19 @@ import android.widget.ListView;
 
 import com.squareup.otto.Subscribe;
 
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.http.HttpResponseCode;
+import org.mariotaku.microblog.library.twitter.model.Paging;
+import org.mariotaku.microblog.library.twitter.model.ResponseList;
+import org.mariotaku.microblog.library.twitter.model.User;
+import org.mariotaku.microblog.library.twitter.model.UserList;
 import org.mariotaku.twidere.R;
 import org.mariotaku.twidere.adapter.SimpleParcelableUserListsAdapter;
 import org.mariotaku.twidere.adapter.SimpleParcelableUsersAdapter;
 import org.mariotaku.twidere.adapter.UserAutoCompleteAdapter;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.http.HttpResponseCode;
-import org.mariotaku.twidere.api.twitter.model.Paging;
-import org.mariotaku.twidere.api.twitter.model.ResponseList;
-import org.mariotaku.twidere.api.twitter.model.User;
-import org.mariotaku.twidere.api.twitter.model.UserList;
 import org.mariotaku.twidere.fragment.CreateUserListDialogFragment;
-import org.mariotaku.twidere.fragment.SupportProgressDialogFragment;
+import org.mariotaku.twidere.fragment.ProgressDialogFragment;
 import org.mariotaku.twidere.model.ParcelableUser;
 import org.mariotaku.twidere.model.ParcelableUserList;
 import org.mariotaku.twidere.model.SingleResponse;
@@ -57,8 +57,8 @@ import org.mariotaku.twidere.model.message.UserListCreatedEvent;
 import org.mariotaku.twidere.model.util.ParcelableUserListUtils;
 import org.mariotaku.twidere.model.util.ParcelableUserUtils;
 import org.mariotaku.twidere.util.AsyncTaskUtils;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 import org.mariotaku.twidere.util.ParseUtils;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +79,7 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
 
     private Runnable mResumeFragmentRunnable;
     private boolean mFragmentsResumed;
+    private View mScreenNameConfirm, mCreateList;
 
     @Override
     public void onClick(final View v) {
@@ -109,6 +110,8 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
         mUserListsListView = (ListView) findViewById(R.id.user_lists_list);
         mUsersListView = (ListView) findViewById(R.id.users_list);
         mCreateUserListContainer = findViewById(R.id.create_list_container);
+        mScreenNameConfirm = findViewById(R.id.screen_name_confirm);
+        mCreateList = findViewById(R.id.create_list);
     }
 
     @Override
@@ -173,6 +176,8 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
         mUsersListView.setAdapter(mUsersAdapter = new SimpleParcelableUsersAdapter(this));
         mUserListsListView.setOnItemClickListener(this);
         mUsersListView.setOnItemClickListener(this);
+        mScreenNameConfirm.setOnClickListener(this);
+        mCreateList.setOnClickListener(this);
         if (selecting_user) {
             mUsersListContainer.setVisibility(View.VISIBLE);
             mUserListsContainer.setVisibility(View.GONE);
@@ -191,12 +196,12 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
     @Override
     protected void onStart() {
         super.onStart();
-        mBus.register(this);
+        bus.register(this);
     }
 
     @Override
     protected void onStop() {
-        mBus.unregister(this);
+        bus.unregister(this);
         super.onStop();
     }
 
@@ -294,8 +299,8 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
 
         @Override
         protected SingleResponse<List<ParcelableUserList>> doInBackground(final Object... params) {
-            final Twitter twitter = TwitterAPIFactory.getTwitterInstance(mActivity, mAccountKey, false);
-            if (twitter == null) return SingleResponse.getInstance();
+            final MicroBlog twitter = MicroBlogAPIFactory.getInstance(mActivity, mAccountKey, false);
+            if (twitter == null) return SingleResponse.Companion.getInstance();
             try {
                 final ResponseList<UserList> lists = twitter.getUserLists(mScreenName, true);
                 final List<ParcelableUserList> data = new ArrayList<>();
@@ -310,12 +315,12 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
                         data.add(ParcelableUserListUtils.from(item, mAccountKey));
                     }
                 }
-                final SingleResponse<List<ParcelableUserList>> result = SingleResponse.getInstance(data);
+                final SingleResponse<List<ParcelableUserList>> result = SingleResponse.Companion.getInstance(data);
                 result.getExtras().putBoolean(EXTRA_IS_MY_ACCOUNT, isMyAccount);
                 return result;
-            } catch (final TwitterException e) {
+            } catch (final MicroBlogException e) {
                 Log.w(LOGTAG, e);
-                return SingleResponse.getInstance(e);
+                return SingleResponse.Companion.getInstance(e);
             }
         }
 
@@ -324,8 +329,8 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
             mActivity.dismissDialogFragment(FRAGMENT_TAG_GET_USER_LISTS);
             if (result.getData() != null) {
                 mActivity.setUserListsData(result.getData(), result.getExtras().getBoolean(EXTRA_IS_MY_ACCOUNT));
-            } else if (result.getException() instanceof TwitterException) {
-                final TwitterException te = (TwitterException) result.getException();
+            } else if (result.getException() instanceof MicroBlogException) {
+                final MicroBlogException te = (MicroBlogException) result.getException();
                 if (te.getStatusCode() == HttpResponseCode.NOT_FOUND) {
                     mActivity.searchUser(mScreenName);
                 }
@@ -334,7 +339,7 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
 
         @Override
         protected void onPreExecute() {
-            final SupportProgressDialogFragment df = new SupportProgressDialogFragment();
+            final ProgressDialogFragment df = new ProgressDialogFragment();
             df.setCancelable(false);
             mActivity.showDialogFragment(df, FRAGMENT_TAG_GET_USER_LISTS);
         }
@@ -358,8 +363,8 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
 
         @Override
         protected SingleResponse<List<ParcelableUser>> doInBackground(final Object... params) {
-            final Twitter twitter = TwitterAPIFactory.getTwitterInstance(mActivity, mAccountKey, false);
-            if (twitter == null) return SingleResponse.getInstance();
+            final MicroBlog twitter = MicroBlogAPIFactory.getInstance(mActivity, mAccountKey, false);
+            if (twitter == null) return SingleResponse.Companion.getInstance();
             try {
                 final Paging paging = new Paging();
                 final ResponseList<User> lists = twitter.searchUsers(mName, paging);
@@ -367,10 +372,10 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
                 for (final User item : lists) {
                     data.add(ParcelableUserUtils.fromUser(item, mAccountKey));
                 }
-                return SingleResponse.getInstance(data);
-            } catch (final TwitterException e) {
+                return SingleResponse.Companion.getInstance(data);
+            } catch (final MicroBlogException e) {
                 Log.w(LOGTAG, e);
-                return SingleResponse.getInstance(e);
+                return SingleResponse.Companion.getInstance(e);
             }
         }
 
@@ -384,7 +389,7 @@ public class UserListSelectorActivity extends BaseActivity implements OnClickLis
 
         @Override
         protected void onPreExecute() {
-            final SupportProgressDialogFragment df = new SupportProgressDialogFragment();
+            final ProgressDialogFragment df = new ProgressDialogFragment();
             df.setCancelable(false);
             mActivity.showDialogFragment(df, FRAGMENT_TAG_SEARCH_USERS);
         }

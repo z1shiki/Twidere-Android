@@ -4,10 +4,11 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.User;
+import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.User;
 import org.mariotaku.twidere.model.ParcelableAccount;
 import org.mariotaku.twidere.model.ParcelableCredentials;
 import org.mariotaku.twidere.model.ParcelableUser;
@@ -18,7 +19,7 @@ import org.mariotaku.twidere.util.Utils;
 /**
  * Created by mariotaku on 16/3/11.
  */
-public class AcceptFriendshipTask extends AbsFriendshipOperationTask {
+public class AcceptFriendshipTask extends AbsFriendshipOperationTask implements Constants {
 
     public AcceptFriendshipTask(final Context context) {
         super(context, FriendshipTaskEvent.Action.ACCEPT);
@@ -26,7 +27,7 @@ public class AcceptFriendshipTask extends AbsFriendshipOperationTask {
 
     @NonNull
     @Override
-    protected User perform(@NonNull Twitter twitter, @NonNull ParcelableCredentials credentials, @NonNull Arguments args) throws TwitterException {
+    protected User perform(@NonNull MicroBlog twitter, @NonNull ParcelableCredentials credentials, @NonNull Arguments args) throws MicroBlogException {
         switch (ParcelableAccountUtils.getAccountType(credentials)) {
             case ParcelableAccount.Type.FANFOU: {
                 return twitter.acceptFanfouFriendship(args.userKey.getId());
@@ -36,7 +37,7 @@ public class AcceptFriendshipTask extends AbsFriendshipOperationTask {
     }
 
     @Override
-    protected void succeededWorker(@NonNull Twitter twitter, @NonNull ParcelableCredentials credentials, @NonNull Arguments args, @NonNull ParcelableUser user) {
+    protected void succeededWorker(@NonNull MicroBlog twitter, @NonNull ParcelableCredentials credentials, @NonNull Arguments args, @NonNull ParcelableUser user) {
         Utils.setLastSeen(context, user.key, System.currentTimeMillis());
     }
 

@@ -22,38 +22,35 @@ package org.mariotaku.twidere.util;
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
 
+import org.mariotaku.microblog.library.twitter.model.DirectMessage;
+import org.mariotaku.microblog.library.twitter.model.Relationship;
+import org.mariotaku.microblog.library.twitter.model.SavedSearch;
+import org.mariotaku.microblog.library.twitter.model.Status;
+import org.mariotaku.microblog.library.twitter.model.Trend;
+import org.mariotaku.microblog.library.twitter.model.Trends;
+import org.mariotaku.microblog.library.twitter.model.User;
 import org.mariotaku.twidere.TwidereConstants;
-import org.mariotaku.twidere.api.twitter.model.DirectMessage;
-import org.mariotaku.twidere.api.twitter.model.Relationship;
-import org.mariotaku.twidere.api.twitter.model.SavedSearch;
-import org.mariotaku.twidere.api.twitter.model.Status;
-import org.mariotaku.twidere.api.twitter.model.Trend;
-import org.mariotaku.twidere.api.twitter.model.Trends;
-import org.mariotaku.twidere.api.twitter.model.User;
+import org.mariotaku.twidere.model.CachedRelationship;
+import org.mariotaku.twidere.model.CachedRelationshipValuesCreator;
 import org.mariotaku.twidere.model.Draft;
 import org.mariotaku.twidere.model.ParcelableActivity;
 import org.mariotaku.twidere.model.ParcelableActivityValuesCreator;
 import org.mariotaku.twidere.model.ParcelableCredentials;
 import org.mariotaku.twidere.model.ParcelableDirectMessage;
 import org.mariotaku.twidere.model.ParcelableDirectMessageValuesCreator;
-import org.mariotaku.twidere.model.ParcelableMedia;
 import org.mariotaku.twidere.model.ParcelableMediaUpdate;
 import org.mariotaku.twidere.model.ParcelableStatus;
 import org.mariotaku.twidere.model.ParcelableStatusValuesCreator;
 import org.mariotaku.twidere.model.ParcelableUser;
 import org.mariotaku.twidere.model.ParcelableUserMention;
 import org.mariotaku.twidere.model.ParcelableUserValuesCreator;
-import org.mariotaku.twidere.model.SpanItem;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.model.draft.SendDirectMessageActionExtra;
-import org.mariotaku.twidere.model.util.ParcelableActivityUtils;
-import org.mariotaku.twidere.model.util.ParcelableMediaUtils;
+import org.mariotaku.twidere.model.util.ParcelableActivityExtensionsKt;
+import org.mariotaku.twidere.model.util.ParcelableDirectMessageUtils;
 import org.mariotaku.twidere.model.util.ParcelableStatusUtils;
 import org.mariotaku.twidere.model.util.ParcelableUserUtils;
-import org.mariotaku.twidere.provider.TwidereDataStore.Activities;
-import org.mariotaku.twidere.provider.TwidereDataStore.CachedRelationships;
 import org.mariotaku.twidere.provider.TwidereDataStore.CachedTrends;
-import org.mariotaku.twidere.provider.TwidereDataStore.DirectMessages;
 import org.mariotaku.twidere.provider.TwidereDataStore.Drafts;
 import org.mariotaku.twidere.provider.TwidereDataStore.Filters;
 import org.mariotaku.twidere.provider.TwidereDataStore.SavedSearches;
@@ -62,22 +59,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mariotaku.twidere.util.HtmlEscapeHelper.toPlainText;
-
 public final class ContentValuesCreator implements TwidereConstants {
+    private ContentValuesCreator() {
+    }
 
     public static ContentValues createCachedRelationship(final Relationship relationship,
                                                          final UserKey accountKey,
                                                          final UserKey userKey) {
-        final ContentValues values = new ContentValues();
-        values.put(CachedRelationships.ACCOUNT_KEY, accountKey.toString());
-        values.put(CachedRelationships.USER_KEY, userKey.toString());
-        values.put(CachedRelationships.FOLLOWING, relationship.isSourceFollowingTarget());
-        values.put(CachedRelationships.FOLLOWED_BY, relationship.isSourceFollowedByTarget());
-        values.put(CachedRelationships.BLOCKING, relationship.isSourceBlockingTarget());
-        values.put(CachedRelationships.BLOCKED_BY, relationship.isSourceBlockedByTarget());
-        values.put(CachedRelationships.MUTING, relationship.isSourceMutingTarget());
-        return values;
+        CachedRelationship cached = new CachedRelationship(relationship, accountKey, userKey);
+        return CachedRelationshipValuesCreator.create(cached);
     }
 
     public static ContentValues createCachedUser(final User user) {
@@ -90,37 +80,8 @@ public final class ContentValuesCreator implements TwidereConstants {
     public static ContentValues createDirectMessage(final DirectMessage message,
                                                     final UserKey accountKey,
                                                     final boolean isOutgoing) {
-        if (message == null) return null;
-        final ContentValues values = new ContentValues();
-        final User sender = message.getSender(), recipient = message.getRecipient();
-        if (sender == null || recipient == null) return null;
-        final String sender_profile_image_url = TwitterContentUtils.getProfileImageUrl(sender);
-        final String recipient_profile_image_url = TwitterContentUtils.getProfileImageUrl(recipient);
-        values.put(DirectMessages.ACCOUNT_KEY, accountKey.toString());
-        values.put(DirectMessages.MESSAGE_ID, message.getId());
-        values.put(DirectMessages.MESSAGE_TIMESTAMP, message.getCreatedAt().getTime());
-        values.put(DirectMessages.SENDER_ID, sender.getId());
-        values.put(DirectMessages.RECIPIENT_ID, recipient.getId());
-        if (isOutgoing) {
-            values.put(DirectMessages.CONVERSATION_ID, recipient.getId());
-        } else {
-            values.put(DirectMessages.CONVERSATION_ID, sender.getId());
-        }
-        final String text_html = InternalTwitterContentUtils.formatDirectMessageText(message);
-        values.put(DirectMessages.TEXT_HTML, text_html);
-        values.put(DirectMessages.TEXT_PLAIN, message.getText());
-        values.put(DirectMessages.TEXT_UNESCAPED, toPlainText(text_html));
-        values.put(DirectMessages.IS_OUTGOING, isOutgoing);
-        values.put(DirectMessages.SENDER_NAME, sender.getName());
-        values.put(DirectMessages.SENDER_SCREEN_NAME, sender.getScreenName());
-        values.put(DirectMessages.RECIPIENT_NAME, recipient.getName());
-        values.put(DirectMessages.RECIPIENT_SCREEN_NAME, recipient.getScreenName());
-        values.put(DirectMessages.SENDER_PROFILE_IMAGE_URL, sender_profile_image_url);
-        values.put(DirectMessages.RECIPIENT_PROFILE_IMAGE_URL, recipient_profile_image_url);
-        final ParcelableMedia[] mediaArray = ParcelableMediaUtils.fromEntities(message);
-        values.put(DirectMessages.MEDIA_JSON, JsonSerializer.serialize(Arrays.asList(mediaArray),
-                ParcelableMedia.class));
-        return values;
+        return ParcelableDirectMessageValuesCreator.create(ParcelableDirectMessageUtils.fromDirectMessage(message,
+                accountKey, isOutgoing));
     }
 
     public static ContentValues createDirectMessage(final ParcelableDirectMessage message) {
@@ -162,7 +123,7 @@ public final class ContentValuesCreator implements TwidereConstants {
         final ContentValues values = new ContentValues();
         values.put(Drafts.ACTION_TYPE, Draft.Action.SEND_DIRECT_MESSAGE);
         values.put(Drafts.TEXT, text);
-        values.put(Drafts.ACCOUNT_IDS, accountKey.toString());
+        values.put(Drafts.ACCOUNT_KEYS, accountKey.toString());
         values.put(Drafts.TIMESTAMP, System.currentTimeMillis());
         if (imageUri != null) {
             final ParcelableMediaUpdate[] mediaArray = {new ParcelableMediaUpdate(imageUri, 0)};
@@ -197,20 +158,40 @@ public final class ContentValuesCreator implements TwidereConstants {
 
     @NonNull
     public static ContentValues createStatus(final Status orig, final UserKey accountKey) {
-        return ParcelableStatusValuesCreator.create(ParcelableStatusUtils.fromStatus(orig,
+        return ParcelableStatusValuesCreator.create(ParcelableStatusUtils.INSTANCE.fromStatus(orig,
                 accountKey, false));
     }
 
     @NonNull
     public static ContentValues createActivity(final ParcelableActivity activity,
-                                               ParcelableCredentials credentials, UserColorNameManager manager) {
+                                               final ParcelableCredentials credentials,
+                                               final UserColorNameManager manager) {
         final ContentValues values = new ContentValues();
-        final ParcelableStatus status = ParcelableActivityUtils.getActivityStatus(activity);
-        if (status != null) {
-            ParcelableStatusUtils.updateExtraInformation(status, credentials, manager);
-            createStatusActivity(status, values);
+        final ParcelableStatus status = ParcelableActivityExtensionsKt.getActivityStatus(activity);
 
-            activity.account_color = status.account_color;
+        activity.account_color = credentials.color;
+
+        if (status != null) {
+            ParcelableStatusUtils.INSTANCE.updateExtraInformation(status, credentials, manager);
+
+            activity.status_id = status.id;
+            activity.status_retweet_id = status.retweet_id;
+            activity.status_my_retweet_id = status.my_retweet_id;
+
+            if (status.is_retweet) {
+                activity.status_retweeted_by_user_key = status.retweeted_by_user_key;
+            } else if (status.is_quote) {
+                activity.status_quote_spans = status.quoted_spans;
+                activity.status_quote_text_plain = status.quoted_text_plain;
+                activity.status_quote_source = status.quoted_source;
+                activity.status_quoted_user_key = status.quoted_user_key;
+            }
+            activity.status_user_key = status.user_key;
+            activity.status_user_following = status.user_is_following;
+            activity.status_spans = status.spans;
+            activity.status_text_plain = status.text_plain;
+            activity.status_source = status.source;
+
             activity.status_user_color = status.user_color;
             activity.status_retweet_user_color = status.retweet_user_color;
             activity.status_quoted_user_color = status.quoted_user_color;
@@ -219,31 +200,10 @@ public final class ContentValuesCreator implements TwidereConstants {
             activity.status_in_reply_to_user_nickname = status.in_reply_to_user_nickname;
             activity.status_retweet_user_nickname = status.retweet_user_nickname;
             activity.status_quoted_user_nickname = status.quoted_user_nickname;
-
-        } else {
-            activity.account_color = credentials.color;
         }
         ParcelableActivityValuesCreator.writeTo(activity, values);
         return values;
     }
-
-    public static void createStatusActivity(@NonNull final ParcelableStatus status,
-                                            @NonNull final ContentValues values) {
-        if (status.is_retweet) {
-            values.put(Activities.STATUS_RETWEETED_BY_USER_ID, String.valueOf(status.retweeted_by_user_key));
-        } else if (status.is_quote) {
-            values.put(Activities.STATUS_QUOTE_SPANS, JsonSerializer.serialize(status.quoted_spans, SpanItem.class));
-            values.put(Activities.STATUS_QUOTE_TEXT_PLAIN, status.quoted_text_plain);
-            values.put(Activities.STATUS_QUOTE_SOURCE, status.quoted_source);
-            values.put(Activities.STATUS_QUOTED_USER_ID, String.valueOf(status.quoted_user_key));
-        }
-        values.put(Activities.STATUS_USER_KEY, String.valueOf(status.user_key));
-        values.put(Activities.STATUS_USER_FOLLOWING, status.user_is_following);
-        values.put(Activities.STATUS_SPANS, JsonSerializer.serialize(status.spans, SpanItem.class));
-        values.put(Activities.STATUS_TEXT_PLAIN, status.text_plain);
-        values.put(Activities.STATUS_SOURCE, status.source);
-    }
-
 
     public static ContentValues[] createTrends(final List<Trends> trendsList) {
         if (trendsList == null) return new ContentValues[0];
@@ -259,5 +219,6 @@ public final class ContentValuesCreator implements TwidereConstants {
         }
         return resultList.toArray(new ContentValues[resultList.size()]);
     }
+
 
 }

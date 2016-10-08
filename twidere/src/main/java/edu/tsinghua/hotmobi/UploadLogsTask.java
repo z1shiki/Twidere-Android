@@ -24,7 +24,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 
-import org.mariotaku.restfu.RestFuUtils;
+import org.mariotaku.commons.io.StreamUtils;
 import org.mariotaku.twidere.BuildConfig;
 import org.mariotaku.twidere.util.Utils;
 
@@ -55,7 +55,7 @@ public class UploadLogsTask implements Runnable {
 
     @Override
     public void run() {
-
+        if (!BuildConfig.HOTMOBI_LOG_ENABLED) return;
         final SharedPreferences prefs = context.getSharedPreferences(HotMobiConstants.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
         if (prefs.contains(HotMobiConstants.KEY_LAST_UPLOAD_TIME)) {
@@ -114,7 +114,7 @@ public class UploadLogsTask implements Runnable {
                     conn.setDoOutput(true);
                     os = conn.getOutputStream();
                     is = new FileInputStream(logFile);
-                    RestFuUtils.copyStream(is, os);
+                    StreamUtils.copy(is, os, null, null);
                     final int responseCode = conn.getResponseCode();
                     if (responseCode >= 200 && responseCode < 300) {
                         uploadLogEvent.finish(conn);

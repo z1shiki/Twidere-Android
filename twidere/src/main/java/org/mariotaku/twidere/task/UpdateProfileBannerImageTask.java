@@ -4,25 +4,36 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 
+import com.squareup.otto.Bus;
+
+import org.mariotaku.abstask.library.AbstractTask;
+import org.mariotaku.microblog.library.MicroBlog;
+import org.mariotaku.microblog.library.MicroBlogException;
+import org.mariotaku.microblog.library.twitter.model.User;
+import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.R;
-import org.mariotaku.twidere.api.twitter.Twitter;
-import org.mariotaku.twidere.api.twitter.TwitterException;
-import org.mariotaku.twidere.api.twitter.model.User;
 import org.mariotaku.twidere.model.ParcelableUser;
 import org.mariotaku.twidere.model.SingleResponse;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.model.message.ProfileUpdatedEvent;
 import org.mariotaku.twidere.model.util.ParcelableUserUtils;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 import org.mariotaku.twidere.util.TwitterWrapper;
 import org.mariotaku.twidere.util.Utils;
+import org.mariotaku.twidere.util.dagger.GeneralComponentHelper;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import javax.inject.Inject;
 
 /**
  * Created by mariotaku on 16/3/11.
  */
-public class UpdateProfileBannerImageTask extends ManagedAsyncTask<Object, Object, SingleResponse<ParcelableUser>> {
+public class UpdateProfileBannerImageTask<ResultHandler> extends AbstractTask<Object,
+        SingleResponse<ParcelableUser>, ResultHandler> implements Constants {
+
+    @Inject
+    protected Bus mBus;
 
     private final UserKey mAccountKey;
     private final Uri mImageUri;
@@ -31,7 +42,8 @@ public class UpdateProfileBannerImageTask extends ManagedAsyncTask<Object, Objec
 
     public UpdateProfileBannerImageTask(final Context context, final UserKey accountKey,
                                         final Uri imageUri, final boolean deleteImage) {
-        super(context);
+        //noinspection unchecked
+        GeneralComponentHelper.build(context).inject((UpdateProfileBannerImageTask<Object>) this);
         mContext = context;
         mAccountKey = accountKey;
         mImageUri = imageUri;
@@ -39,11 +51,11 @@ public class UpdateProfileBannerImageTask extends ManagedAsyncTask<Object, Objec
     }
 
     @Override
-    protected void onPostExecute(final SingleResponse<ParcelableUser> result) {
-        super.onPostExecute(result);
+    protected void afterExecute(ResultHandler callback, final SingleResponse<ParcelableUser> result) {
+        super.afterExecute(callback, result);
         if (result.hasData()) {
             Utils.showOkMessage(mContext, R.string.profile_banner_image_updated, false);
-            bus.post(new ProfileUpdatedEvent(result.getData()));
+            mBus.post(new ProfileUpdatedEvent(result.getData()));
         } else {
             Utils.showErrorMessage(mContext, R.string.action_updating_profile_banner_image, result.getException(),
                     true);
@@ -51,9 +63,9 @@ public class UpdateProfileBannerImageTask extends ManagedAsyncTask<Object, Objec
     }
 
     @Override
-    protected SingleResponse<ParcelableUser> doInBackground(final Object... params) {
+    protected SingleResponse<ParcelableUser> doLongOperation(final Object params) {
         try {
-            final Twitter twitter = TwitterAPIFactory.getTwitterInstance(mContext, mAccountKey,
+            final MicroBlog twitter = MicroBlogAPIFactory.getInstance(mContext, mAccountKey,
                     true);
             TwitterWrapper.updateProfileBannerImage(mContext, twitter, mImageUri, mDeleteImage);
             // Wait for 5 seconds, see
@@ -64,9 +76,9 @@ public class UpdateProfileBannerImageTask extends ManagedAsyncTask<Object, Objec
                 Log.w(LOGTAG, e);
             }
             final User user = twitter.verifyCredentials();
-            return SingleResponse.getInstance(ParcelableUserUtils.fromUser(user, mAccountKey));
-        } catch (TwitterException | FileNotFoundException e) {
-            return SingleResponse.getInstance(e);
+            return SingleResponse.Companion.getInstance(ParcelableUserUtils.fromUser(user, mAccountKey));
+        } catch (MicroBlogException | IOException e) {
+            return SingleResponse.Companion.getInstance(e);
         }
     }
 

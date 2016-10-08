@@ -22,17 +22,17 @@ import org.mariotaku.restfu.http.HttpResponse;
 import org.mariotaku.restfu.http.MultiValueMap;
 import org.mariotaku.restfu.http.RestHttpClient;
 import org.mariotaku.restfu.http.mime.Body;
+import org.mariotaku.restfu.oauth.OAuthAuthorization;
+import org.mariotaku.restfu.oauth.OAuthEndpoint;
 import org.mariotaku.twidere.Constants;
-import org.mariotaku.twidere.api.twitter.auth.OAuthAuthorization;
-import org.mariotaku.twidere.api.twitter.auth.OAuthEndpoint;
 import org.mariotaku.twidere.model.CacheMetadata;
 import org.mariotaku.twidere.model.ParcelableCredentials;
 import org.mariotaku.twidere.model.ParcelableMedia;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.model.util.ParcelableCredentialsUtils;
 import org.mariotaku.twidere.util.JsonSerializer;
+import org.mariotaku.twidere.util.MicroBlogAPIFactory;
 import org.mariotaku.twidere.util.SharedPreferencesWrapper;
-import org.mariotaku.twidere.util.TwitterAPIFactory;
 import org.mariotaku.twidere.util.UserAgentUtils;
 import org.mariotaku.twidere.util.media.preview.PreviewMediaExtractor;
 import org.mariotaku.twidere.util.net.NoIntercept;
@@ -123,7 +123,7 @@ public class TwidereMediaDownloader implements MediaDownloader, Constants {
             UserKey accountKey = ((MediaExtra) extra).getAccountKey();
             if (accountKey != null) {
                 account = ParcelableCredentialsUtils.getCredentials(mContext, accountKey);
-                auth = TwitterAPIFactory.getAuthorization(account);
+                auth = MicroBlogAPIFactory.getAuthorization(account);
             }
         }
         final Uri modifiedUri = getReplacedUri(uri, account != null ? account.api_url_format : null);
@@ -209,7 +209,7 @@ public class TwidereMediaDownloader implements MediaDownloader, Constants {
             final String host = uri.getHost();
             final String domain = host.substring(0, host.lastIndexOf(".twitter.com"));
             final String path = uri.getPath();
-            sb.append(TwitterAPIFactory.getApiUrl(apiUrlFormat, domain, path));
+            sb.append(MicroBlogAPIFactory.getApiUrl(apiUrlFormat, domain, path));
             final String query = uri.getQuery();
             if (!TextUtils.isEmpty(query)) {
                 sb.append("?");

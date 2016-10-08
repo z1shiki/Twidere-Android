@@ -66,6 +66,7 @@ import com.squareup.otto.Bus;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.mariotaku.microblog.library.twitter.model.Activity;
 import org.mariotaku.sqliteqb.library.ArgsArray;
 import org.mariotaku.sqliteqb.library.Columns.Column;
 import org.mariotaku.sqliteqb.library.Expression;
@@ -81,7 +82,6 @@ import org.mariotaku.twidere.activity.HomeActivity;
 import org.mariotaku.twidere.annotation.CustomTabType;
 import org.mariotaku.twidere.annotation.NotificationType;
 import org.mariotaku.twidere.annotation.ReadPositionTag;
-import org.mariotaku.twidere.api.twitter.model.Activity;
 import org.mariotaku.twidere.app.TwidereApplication;
 import org.mariotaku.twidere.model.AccountPreferences;
 import org.mariotaku.twidere.model.ActivityTitleSummaryMessage;
@@ -91,6 +91,7 @@ import org.mariotaku.twidere.model.ParcelableActivity;
 import org.mariotaku.twidere.model.ParcelableActivityCursorIndices;
 import org.mariotaku.twidere.model.ParcelableDirectMessageCursorIndices;
 import org.mariotaku.twidere.model.ParcelableUser;
+import org.mariotaku.twidere.model.SpanItem;
 import org.mariotaku.twidere.model.StringLongPair;
 import org.mariotaku.twidere.model.UnreadItem;
 import org.mariotaku.twidere.model.UserKey;
@@ -121,6 +122,8 @@ import org.mariotaku.twidere.util.ActivityTracker;
 import org.mariotaku.twidere.util.AsyncTwitterWrapper;
 import org.mariotaku.twidere.util.DataStoreUtils;
 import org.mariotaku.twidere.util.ImagePreloader;
+import org.mariotaku.twidere.util.InternalTwitterContentUtils;
+import org.mariotaku.twidere.util.JsonSerializer;
 import org.mariotaku.twidere.util.NotificationManagerWrapper;
 import org.mariotaku.twidere.util.ParseUtils;
 import org.mariotaku.twidere.util.PermissionsManager;
@@ -159,8 +162,8 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
-public final class TwidereDataProvider extends ContentProvider implements Constants, OnSharedPreferenceChangeListener,
-        LazyLoadCallback {
+public final class TwidereDataProvider extends ContentProvider implements Constants,
+        OnSharedPreferenceChangeListener, LazyLoadCallback {
 
     public static final String TAG_OLDEST_MESSAGES = "oldest_messages";
     private static final Pattern PATTERN_SCREEN_NAME = Pattern.compile("(?i)[@\uFF20]?([a-z0-9_]{1,20})");
@@ -601,13 +604,13 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
 
     @Override
     public SQLiteDatabase onCreateSQLiteDatabase() {
-        final TwidereApplication app = TwidereApplication.getInstance(getContext());
-        final SQLiteOpenHelper helper = app.getSQLiteOpenHelper();
+        final TwidereApplication app = TwidereApplication.Companion.getInstance(getContext());
+        final SQLiteOpenHelper helper = app.getSqLiteOpenHelper();
         return helper.getWritableDatabase();
     }
 
     @Override
-    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
+    public void onSharedPreferenceChanged(final SharedPreferences preferences, final String key) {
         updatePreferences();
     }
 
@@ -785,7 +788,8 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
                 }
             }
             if (table == null) return null;
-            final Cursor c = mDatabaseWrapper.query(table, projection, selection, selectionArgs, null, null, sortOrder);
+            final Cursor c = mDatabaseWrapper.query(table, projection, selection, selectionArgs,
+                    null, null, sortOrder);
             setNotificationUri(c, Utils.getNotificationUri(tableId, uri));
             return c;
         } catch (final SQLException e) {
@@ -1232,7 +1236,7 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
         final Context context = getContext();
         if (uri == null || valuesArray == null || valuesArray.length == 0 || context == null)
             return;
-        preloadImages(valuesArray);
+        preloadMedia(valuesArray);
         switch (tableId) {
             case TABLE_ID_STATUSES: {
                 mBackgroundExecutor.execute(new Runnable() {
@@ -1285,7 +1289,7 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
     }
 
     private long getPositionTag(String tag, UserKey accountKey) {
-        final long position = mReadStateManager.getPosition(Utils.getReadPositionTagWithAccounts(tag,
+        final long position = mReadStateManager.getPosition(Utils.getReadPositionTagWithAccount(tag,
                 accountKey));
         if (position != -1) return position;
         return mReadStateManager.getPosition(tag);
@@ -1354,7 +1358,7 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
             applyNotificationPreferences(builder, pref, pref.getHomeTimelineNotificationType());
             try {
                 nm.notify("home_" + accountKey, Utils.getNotificationId(NOTIFICATION_ID_HOME_TIMELINE, accountKey), builder.build());
-                Utils.sendPebbleNotification(context, notificationContent);
+                Utils.sendPebbleNotification(context, null, notificationContent);
             } catch (SecurityException e) {
                 // Silently ignore
             }
@@ -1367,6 +1371,7 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
     private void showInteractionsNotification(AccountPreferences pref, long position, boolean combined) {
         final Context context = getContext();
         if (context == null) return;
+        final SQLiteDatabase db = mDatabaseWrapper.getSQLiteDatabase();
         final UserKey accountKey = pref.getAccountKey();
         final String where = Expression.and(
                 Expression.equalsArgs(AccountSupportColumns.ACCOUNT_KEY),
@@ -1377,6 +1382,7 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
                 new OrderBy(Activities.TIMESTAMP, false).getSQL());
         if (c == null) return;
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+        final StringBuilder pebbleNotificationStringBuilder = new StringBuilder();
         try {
             final int count = c.getCount();
             if (count == 0) return;
@@ -1399,6 +1405,7 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
             while (c.moveToNext()) {
                 if (messageLines == 5) {
                     style.addLine(resources.getString(R.string.and_N_more, count - c.getPosition()));
+                    pebbleNotificationStringBuilder.append(resources.getString(R.string.and_N_more, count - c.getPosition()));
                     break;
                 }
                 final ParcelableActivity activity = ci.newObject(c);
@@ -1406,13 +1413,21 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
                         activity.action)) {
                     continue;
                 }
-                final String[] filteredUserIds = DataStoreUtils.getFilteredUserIds(context);
+                if (activity.status_id != null && InternalTwitterContentUtils.isFiltered(db,
+                        activity.status_user_key, activity.status_text_plain,
+                        activity.status_quote_text_plain, activity.status_spans,
+                        activity.status_quote_spans, activity.status_source,
+                        activity.status_quote_source, activity.status_retweeted_by_user_key,
+                        activity.status_quoted_user_key)) {
+                    continue;
+                }
+                final UserKey[] filteredUserIds = DataStoreUtils.getFilteredUserIds(context);
                 if (timestamp == -1) {
                     timestamp = activity.timestamp;
                 }
-                ParcelableActivityUtils.initAfterFilteredSourceIds(activity, filteredUserIds,
+                ParcelableActivityUtils.INSTANCE.initAfterFilteredSourceIds(activity, filteredUserIds,
                         pref.isNotificationFollowingOnly());
-                final ParcelableUser[] sources = ParcelableActivityUtils.getAfterFilteredSources(activity);
+                final ParcelableUser[] sources = ParcelableActivityUtils.INSTANCE.getAfterFilteredSources(activity);
                 if (ArrayUtils.isEmpty(sources)) continue;
                 final ActivityTitleSummaryMessage message = ActivityTitleSummaryMessage.get(context,
                         mUserColorNameManager, activity, sources,
@@ -1421,9 +1436,15 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
                     final CharSequence summary = message.getSummary();
                     if (TextUtils.isEmpty(summary)) {
                         style.addLine(message.getTitle());
+                        pebbleNotificationStringBuilder.append(message.getTitle());
+                        pebbleNotificationStringBuilder.append("\n");
                     } else {
                         style.addLine(SpanFormatter.format(resources.getString(R.string.title_summary_line_format),
                                 message.getTitle(), summary));
+                        pebbleNotificationStringBuilder.append(message.getTitle());
+                        pebbleNotificationStringBuilder.append(": ");
+                        pebbleNotificationStringBuilder.append(message.getSummary());
+                        pebbleNotificationStringBuilder.append("\n");
                     }
                     messageLines++;
                 }
@@ -1447,6 +1468,9 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
         final int notificationId = Utils.getNotificationId(NOTIFICATION_ID_INTERACTIONS_TIMELINE,
                 accountKey);
         mNotificationManager.notify("interactions", notificationId, builder.build());
+
+        Utils.sendPebbleNotification(context, context.getResources().getString(R.string.interactions), pebbleNotificationStringBuilder.toString());
+
     }
 
     private PendingIntent getContentIntent(final Context context, @CustomTabType final String type,
@@ -1489,6 +1513,7 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
         }
         builder.setColor(pref.getNotificationLightColor());
         builder.setDefaults(notificationDefaults);
+        builder.setOnlyAlertOnce(true);
     }
 
     private void showMessagesNotification(AccountPreferences pref, StringLongPair[] pairs, ContentValues[] valuesArray) {
@@ -1548,6 +1573,9 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
         final Cursor userCursor = mDatabaseWrapper.query(DirectMessages.Inbox.TABLE_NAME,
                 userProjection, filteredSelection, selectionArgs, DirectMessages.SENDER_ID, null,
                 DirectMessages.DEFAULT_SORT_ORDER);
+
+        final StringBuilder pebbleNotificationBuilder = new StringBuilder();
+
         //noinspection TryFinallyCanBeTryWithResources
         try {
             final int usersCount = userCursor.getCount();
@@ -1595,6 +1623,12 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
                     sb.append(' ');
                     sb.append(messageCursor.getString(messageIndices.text_unescaped));
                     style.addLine(sb);
+                    pebbleNotificationBuilder.append(mUserColorNameManager.getUserNickname(messageCursor.getString(idxUserId),
+                            mNameFirst ? messageCursor.getString(messageIndices.sender_name) :
+                                    messageCursor.getString(messageIndices.sender_screen_name)));
+                    pebbleNotificationBuilder.append(": ");
+                    pebbleNotificationBuilder.append(messageCursor.getString(messageIndices.text_unescaped));
+                    pebbleNotificationBuilder.append("\n");
                 }
                 final long userId = messageCursor.getLong(messageIndices.sender_id);
                 final long messageId = messageCursor.getLong(messageIndices.id);
@@ -1629,7 +1663,9 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
             applyNotificationPreferences(builder, pref, pref.getDirectMessagesNotificationType());
             try {
                 nm.notify("messages_" + accountKey, NOTIFICATION_ID_DIRECT_MESSAGES, builder.build());
-                Utils.sendPebbleNotification(context, notificationContent);
+
+                //TODO: Pebble notification - Only notify about recently added DMs, not previous ones?
+                Utils.sendPebbleNotification(context, "DM", pebbleNotificationBuilder.toString());
             } catch (SecurityException e) {
                 // Silently ignore
             }
@@ -1639,19 +1675,29 @@ public final class TwidereDataProvider extends ContentProvider implements Consta
         }
     }
 
-    private void preloadImages(final ContentValues... values) {
+    private void preloadMedia(final ContentValues... values) {
         if (values == null) return;
+        final boolean preloadProfileImages = mPreferences.getBoolean(KEY_PRELOAD_PROFILE_IMAGES, false);
+        final boolean preloadPreviewMedia = mPreferences.getBoolean(KEY_PRELOAD_PREVIEW_IMAGES, false);
         for (final ContentValues v : values) {
-            if (mPreferences.getBoolean(KEY_PRELOAD_PROFILE_IMAGES, false)) {
+            if (preloadProfileImages) {
                 mImagePreloader.preloadImage(v.getAsString(Statuses.USER_PROFILE_IMAGE_URL));
                 mImagePreloader.preloadImage(v.getAsString(DirectMessages.SENDER_PROFILE_IMAGE_URL));
                 mImagePreloader.preloadImage(v.getAsString(DirectMessages.RECIPIENT_PROFILE_IMAGE_URL));
             }
-            if (mPreferences.getBoolean(KEY_PRELOAD_PREVIEW_IMAGES, false)) {
-                final String textHtml = v.getAsString(Statuses.TEXT_HTML);
-                for (final String link : PreviewMediaExtractor.getSupportedLinksInStatus(textHtml)) {
-                    mImagePreloader.preloadImage(link);
-                }
+            if (preloadPreviewMedia) {
+                preloadSpans(JsonSerializer.parseList(v.getAsString(Statuses.SPANS), SpanItem.class));
+                preloadSpans(JsonSerializer.parseList(v.getAsString(Statuses.QUOTED_SPANS), SpanItem.class));
+            }
+        }
+    }
+
+    private void preloadSpans(List<SpanItem> spans) {
+        if (spans == null) return;
+        for (SpanItem span : spans) {
+            if (span.link == null) continue;
+            if (PreviewMediaExtractor.isSupported(span.link)) {
+                mImagePreloader.preloadImage(span.link);
             }
         }
     }

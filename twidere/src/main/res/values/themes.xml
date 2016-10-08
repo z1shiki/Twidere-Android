@@ -18,6 +18,7 @@
         <item name="menuIconColor">@color/action_icon_light</item>
         <item name="messageBubbleColor">@color/message_bubble_color_dark</item>
         <item name="quoteIndicatorBackgroundColor">@color/quote_indicator_background_dark</item>
+        <item name="mediaLabelBackground">#505050</item>
 
         <!-- ATE attributes -->
         <item name="ateThemeKey">dark</item>
@@ -62,6 +63,9 @@
     </style>
 
     <style name="Theme.Twidere.Dialog" parent="Theme.AppCompat.Dialog">
+
+        <!-- TODO this is a simple fix for https://github.com/TwidereProject/Twidere-Android/issues/579 -->
+        <item name="android:windowBackground">@drawable/abc_dialog_material_background_dark</item>
 
         <!-- Widget styles -->
         <item name="android:listSeparatorTextViewStyle">@style/Widget.Dark.TextView.ListSeparator
@@ -129,8 +133,7 @@
 
         <!-- Window attributes -->
         <item name="android:windowBackground">@color/background_color_window_viewer</item>
-        <!--<item name="android:windowIsTranslucent">true</item>-->
-        <!--<item name="android:colorBackgroundCacheHint">@null</item>-->
+
         <item name="windowActionBarOverlay">true</item>
         <item name="actionBarStyle">@style/Widget.Twidere.Viewer.ActionBar</item>
         <item name="actionModeShareDrawable">@drawable/ic_action_share</item>

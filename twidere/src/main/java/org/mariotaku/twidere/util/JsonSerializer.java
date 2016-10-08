@@ -20,16 +20,15 @@
 package org.mariotaku.twidere.util;
 
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.bluelinelabs.logansquare.JsonMapper;
 
-import org.mariotaku.twidere.BuildConfig;
-import org.mariotaku.twidere.Constants;
+import org.mariotaku.commons.logansquare.LoganSquareMapperFinder;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
@@ -40,15 +39,15 @@ import java.util.Map;
  */
 public class JsonSerializer {
 
+    private JsonSerializer() {
+    }
+
     @Nullable
     public static <T> String serialize(@Nullable final List<T> list, final Class<T> cls) {
         if (list == null) return null;
         try {
             return LoganSquareMapperFinder.mapperFor(cls).serialize(list);
         } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOGTAG, e);
-            }
             return null;
         }
     }
@@ -59,9 +58,6 @@ public class JsonSerializer {
         try {
             return LoganSquareMapperFinder.mapperFor(cls).serialize(list);
         } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOGTAG, e);
-            }
             return null;
         }
     }
@@ -72,9 +68,6 @@ public class JsonSerializer {
         try {
             return LoganSquareMapperFinder.mapperFor(cls).serialize(Arrays.asList(array));
         } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOGTAG, e);
-            }
             return null;
         }
     }
@@ -85,9 +78,6 @@ public class JsonSerializer {
         try {
             return LoganSquareMapperFinder.mapperFor(cls).serialize(object);
         } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOGTAG, e);
-            }
             return null;
         }
     }
@@ -101,9 +91,6 @@ public class JsonSerializer {
                     LoganSquareMapperFinder.mapperFor(object.getClass());
             return mapper.serialize(object);
         } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOGTAG, e);
-            }
             return null;
         }
     }
@@ -116,9 +103,6 @@ public class JsonSerializer {
             //noinspection unchecked
             return list.toArray((T[]) Array.newInstance(cls, list.size()));
         } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOGTAG, e);
-            }
             return null;
         }
     }
@@ -129,9 +113,6 @@ public class JsonSerializer {
         try {
             return LoganSquareMapperFinder.mapperFor(cls).parse(string);
         } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOGTAG, e);
-            }
             return null;
         }
     }
@@ -141,14 +122,30 @@ public class JsonSerializer {
         //noinspection TryFinallyCanBeTryWithResources
         try {
             is = new FileInputStream(file);
-            return LoganSquareMapperFinder.mapperFor(cls).parseList(is);
+            return parseList(is, cls);
         } catch (IOException e) {
-            if (BuildConfig.DEBUG) {
-                Log.w(Constants.LOGTAG, e);
-            }
             return null;
         } finally {
             Utils.closeSilently(is);
+        }
+    }
+
+    public static <E> List<E> parseList(InputStream stream, Class<E> cls) {
+        try {
+            return LoganSquareMapperFinder.mapperFor(cls).parseList(stream);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    @Nullable
+    public static <E> List<E> parseList(@Nullable String json, Class<E> cls) {
+        if (json == null) return null;
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            return LoganSquareMapperFinder.mapperFor(cls).parseList(json);
+        } catch (IOException e) {
+            return null;
         }
     }
 

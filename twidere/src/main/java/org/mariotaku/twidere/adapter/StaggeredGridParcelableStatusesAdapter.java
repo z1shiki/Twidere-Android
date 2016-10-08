@@ -46,8 +46,8 @@ import org.mariotaku.twidere.view.holder.iface.IStatusViewHolder;
  */
 public class StaggeredGridParcelableStatusesAdapter extends ParcelableStatusesAdapter {
 
-    public StaggeredGridParcelableStatusesAdapter(Context context, boolean compact) {
-        super(context, compact);
+    public StaggeredGridParcelableStatusesAdapter(Context context) {
+        super(context);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class StaggeredGridParcelableStatusesAdapter extends ParcelableStatusesAd
 
     @NonNull
     @Override
-    protected IStatusViewHolder onCreateStatusViewHolder(ViewGroup parent, boolean compact) {
+    protected IStatusViewHolder onCreateStatusViewHolder(ViewGroup parent) {
         final View view = getInflater().inflate(R.layout.adapter_item_media_status, parent, false);
         final MediaStatusViewHolder holder = new MediaStatusViewHolder(this, view);
         holder.setOnClickListeners();
@@ -88,7 +88,7 @@ public class StaggeredGridParcelableStatusesAdapter extends ParcelableStatusesAd
 
 
         @Override
-        public void displayStatus(ParcelableStatus status, boolean displayInReplyTo) {
+        public void displayStatus(@NonNull ParcelableStatus status, boolean displayInReplyTo, boolean shouldDisplayExtraType) {
             final MediaLoaderWrapper loader = adapter.getMediaLoader();
             final ParcelableMedia[] media = status.media;
             if (media == null || media.length < 1) return;
@@ -109,11 +109,6 @@ public class StaggeredGridParcelableStatusesAdapter extends ParcelableStatusesAd
         }
 
         @Override
-        public void displayStatus(@NonNull ParcelableStatus status, boolean displayInReplyTo, boolean shouldDisplayExtraType) {
-            displayStatus(status, displayInReplyTo);
-        }
-
-        @Override
         @Nullable
         public ImageView getProfileImageView() {
             return mediaProfileImageView;
@@ -129,7 +124,7 @@ public class StaggeredGridParcelableStatusesAdapter extends ParcelableStatusesAd
         public void onClick(View v) {
             if (listener == null) return;
             switch (v.getId()) {
-                case R.id.item_content: {
+                case R.id.itemContent: {
                     listener.onStatusClick(this, getLayoutPosition());
                     break;
                 }
@@ -147,7 +142,7 @@ public class StaggeredGridParcelableStatusesAdapter extends ParcelableStatusesAd
         @Override
         public void setStatusClickListener(StatusClickListener listener) {
             this.listener = listener;
-            itemView.findViewById(R.id.item_content).setOnClickListener(this);
+            itemView.findViewById(R.id.itemContent).setOnClickListener(this);
         }
 
         @Override

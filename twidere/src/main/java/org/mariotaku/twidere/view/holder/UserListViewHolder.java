@@ -55,14 +55,14 @@ public class UserListViewHolder extends ViewHolder implements View.OnClickListen
 
     public UserListViewHolder(IUserListsAdapter<?> adapter, View itemView) {
         super(itemView);
-        itemContent = (IColorLabelView) itemView.findViewById(R.id.item_content);
+        itemContent = (IColorLabelView) itemView.findViewById(R.id.itemContent);
         this.adapter = adapter;
-        profileImageView = (ImageView) itemView.findViewById(R.id.profile_image);
+        profileImageView = (ImageView) itemView.findViewById(R.id.profileImage);
         nameView = (TextView) itemView.findViewById(R.id.name);
-        createdByView = (TextView) itemView.findViewById(R.id.created_by);
+        createdByView = (TextView) itemView.findViewById(R.id.createdBy);
         descriptionView = (TextView) itemView.findViewById(R.id.description);
-        membersCountView = (TextView) itemView.findViewById(R.id.members_count);
-        subscribersCountView = (TextView) itemView.findViewById(R.id.subscribers_count);
+        membersCountView = (TextView) itemView.findViewById(R.id.membersCount);
+        subscribersCountView = (TextView) itemView.findViewById(R.id.subscribersCount);
     }
 
     public void displayUserList(ParcelableUserList userList) {
@@ -73,11 +73,11 @@ public class UserListViewHolder extends ViewHolder implements View.OnClickListen
 
         itemContent.drawStart(manager.getUserColor(userList.user_key));
         nameView.setText(userList.name);
-        final boolean nameFirst = adapter.isNameFirst();
+        final boolean nameFirst = adapter.getNameFirst();
         final String createdByDisplayName = manager.getDisplayName(userList, nameFirst);
         createdByView.setText(context.getString(R.string.created_by, createdByDisplayName));
 
-        if (adapter.isProfileImageEnabled()) {
+        if (adapter.getProfileImageEnabled()) {
             profileImageView.setVisibility(View.VISIBLE);
             loader.displayProfileImage(profileImageView, userList.user_profile_image_url);
         } else {
@@ -98,7 +98,7 @@ public class UserListViewHolder extends ViewHolder implements View.OnClickListen
     public void onClick(View v) {
         if (userListClickListener == null) return;
         switch (v.getId()) {
-            case R.id.item_content: {
+            case R.id.itemContent: {
                 userListClickListener.onUserListClick(this, getLayoutPosition());
                 break;
             }
@@ -109,7 +109,7 @@ public class UserListViewHolder extends ViewHolder implements View.OnClickListen
     public boolean onLongClick(View v) {
         if (userListClickListener == null) return false;
         switch (v.getId()) {
-            case R.id.item_content: {
+            case R.id.itemContent: {
                 return userListClickListener.onUserListLongClick(this, getLayoutPosition());
             }
         }

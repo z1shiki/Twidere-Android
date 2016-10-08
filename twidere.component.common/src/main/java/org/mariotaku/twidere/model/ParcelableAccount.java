@@ -30,10 +30,10 @@ import com.bluelinelabs.logansquare.annotation.OnJsonParseComplete;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelablePlease;
 import com.hannesdorfmann.parcelableplease.annotation.ParcelableThisPlease;
 
+import org.mariotaku.commons.objectcursor.LoganSquareCursorFieldConverter;
 import org.mariotaku.library.objectcursor.annotation.AfterCursorObjectCreated;
 import org.mariotaku.library.objectcursor.annotation.CursorField;
 import org.mariotaku.library.objectcursor.annotation.CursorObject;
-import org.mariotaku.twidere.model.util.LoganSquareCursorFieldConverter;
 import org.mariotaku.twidere.model.util.UserKeyConverter;
 import org.mariotaku.twidere.model.util.UserKeyCursorFieldConverter;
 import org.mariotaku.twidere.provider.TwidereDataStore.Accounts;
@@ -101,12 +101,14 @@ public class ParcelableAccount implements Parcelable {
     public boolean is_dummy;
 
     public static final Creator<ParcelableAccount> CREATOR = new Creator<ParcelableAccount>() {
+        @Override
         public ParcelableAccount createFromParcel(Parcel source) {
             ParcelableAccount target = new ParcelableAccount();
             ParcelableAccountParcelablePlease.readFromParcel(target, source);
             return target;
         }
 
+        @Override
         public ParcelableAccount[] newArray(int size) {
             return new ParcelableAccount[size];
         }

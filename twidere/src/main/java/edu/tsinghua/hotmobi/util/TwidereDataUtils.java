@@ -32,6 +32,9 @@ import edu.tsinghua.hotmobi.model.TweetType;
 
 public class TwidereDataUtils {
 
+    private TwidereDataUtils() {
+    }
+
     public static String getLinkType(int type) {
         switch (type) {
             case TwidereLinkify.LINK_TYPE_MENTION:
@@ -43,8 +46,6 @@ public class TwidereDataUtils {
                 return "urlLink";
             case TwidereLinkify.LINK_TYPE_LIST:
                 return "userList";
-            case TwidereLinkify.LINK_TYPE_STATUS:
-                return "status";
             case TwidereLinkify.LINK_TYPE_USER_ID:
                 return "userID";
             case TwidereLinkify.LINK_TYPE_HASHTAG:

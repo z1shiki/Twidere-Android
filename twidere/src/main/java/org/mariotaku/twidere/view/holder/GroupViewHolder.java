@@ -57,14 +57,14 @@ public class GroupViewHolder extends ViewHolder implements View.OnClickListener,
 
     public GroupViewHolder(IGroupsAdapter<?> adapter, View itemView) {
         super(itemView);
-        itemContent = (IColorLabelView) itemView.findViewById(R.id.item_content);
+        itemContent = (IColorLabelView) itemView.findViewById(R.id.itemContent);
         this.adapter = adapter;
-        profileImageView = (ImageView) itemView.findViewById(R.id.profile_image);
+        profileImageView = (ImageView) itemView.findViewById(R.id.profileImage);
         nameView = (NameView) itemView.findViewById(R.id.name);
-        externalIndicator = (TextView) itemView.findViewById(R.id.external_indicator);
+        externalIndicator = (TextView) itemView.findViewById(R.id.externalIndicator);
         descriptionView = (TextView) itemView.findViewById(R.id.description);
-        membersCountView = (TextView) itemView.findViewById(R.id.members_count);
-        adminsCountView = (TextView) itemView.findViewById(R.id.admins_count);
+        membersCountView = (TextView) itemView.findViewById(R.id.membersCount);
+        adminsCountView = (TextView) itemView.findViewById(R.id.adminsCount);
     }
 
     public void displayGroup(ParcelableGroup group) {
@@ -84,7 +84,7 @@ public class GroupViewHolder extends ViewHolder implements View.OnClickListener,
             externalIndicator.setText(context.getString(R.string.external_group_host_format,
                     groupHost));
         }
-        if (adapter.isProfileImageEnabled()) {
+        if (adapter.getProfileImageEnabled()) {
             profileImageView.setVisibility(View.VISIBLE);
             loader.displayProfileImage(profileImageView, group.homepage_logo);
         } else {
@@ -105,7 +105,7 @@ public class GroupViewHolder extends ViewHolder implements View.OnClickListener,
     public void onClick(View v) {
         if (groupClickListener == null) return;
         switch (v.getId()) {
-            case R.id.item_content: {
+            case R.id.itemContent: {
                 groupClickListener.onGroupClick(this, getLayoutPosition());
                 break;
             }
@@ -116,7 +116,7 @@ public class GroupViewHolder extends ViewHolder implements View.OnClickListener,
     public boolean onLongClick(View v) {
         if (groupClickListener == null) return false;
         switch (v.getId()) {
-            case R.id.item_content: {
+            case R.id.itemContent: {
                 return groupClickListener.onGroupLongClick(this, getLayoutPosition());
             }
         }

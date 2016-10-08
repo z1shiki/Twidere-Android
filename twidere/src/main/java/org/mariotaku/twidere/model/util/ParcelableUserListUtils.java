@@ -2,8 +2,8 @@ package org.mariotaku.twidere.model.util;
 
 import android.text.TextUtils;
 
-import org.mariotaku.twidere.api.twitter.model.User;
-import org.mariotaku.twidere.api.twitter.model.UserList;
+import org.mariotaku.microblog.library.twitter.model.User;
+import org.mariotaku.microblog.library.twitter.model.UserList;
 import org.mariotaku.twidere.model.ParcelableUserList;
 import org.mariotaku.twidere.model.UserKey;
 import org.mariotaku.twidere.util.TwitterContentUtils;
@@ -12,6 +12,9 @@ import org.mariotaku.twidere.util.TwitterContentUtils;
  * Created by mariotaku on 16/3/5.
  */
 public class ParcelableUserListUtils {
+    private ParcelableUserListUtils() {
+    }
+
     public static ParcelableUserList from(UserList list, UserKey accountKey) {
         return from(list, accountKey, 0, false);
     }

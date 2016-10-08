@@ -53,11 +53,8 @@ public interface TwidereConstants extends SharedPreferenceConstants, IntentConst
     String TWITTER_CONSUMER_SECRET_LEGACY = "JARXkJTfxo0F8MyctYy9bUmrLISjo8vXAHsZHYuk2E";
     String TWITTER_CONSUMER_KEY = "i5XtSVfoWjLjKlnrvhiLPMZC0";
     String TWITTER_CONSUMER_SECRET = "sQncmZ2atQR6tKbqnnAtqjrECqN8k6FD4p4OoNS0XTDkUz3HGH";
-    String FANFOU_CONSUMER_KEY = "86d1146dda1d21d59351008a1d1058fd";
-    String FANFOU_CONSUMER_SECRET = "c00f4b83dbfc52e2ed78a21d4edfc3cc";
 
     String DEFAULT_TWITTER_API_URL_FORMAT = "https://[DOMAIN.]twitter.com/";
-    String DEFAULT_FANFOU_API_URL_FORMAT = "http://api.fanfou.com/";
 
     String SCHEME_HTTP = "http";
     String SCHEME_HTTPS = "https";
@@ -70,7 +67,7 @@ public interface TwidereConstants extends SharedPreferenceConstants, IntentConst
     String PROTOCOL_CONTENT = SCHEME_CONTENT + "://";
     String PROTOCOL_TWIDERE = SCHEME_TWIDERE + "://";
 
-    String AUTHORITY_TWIDERE_FILE = "twidere.file";
+    String AUTHORITY_TWIDERE_SHARE = "twidere.share";
     String AUTHORITY_TWIDERE_CACHE = "twidere.cache";
 
     String AUTHORITY_USER = "user";
@@ -115,6 +112,7 @@ public interface TwidereConstants extends SharedPreferenceConstants, IntentConst
     String AUTHORITY_PROFILE_EDITOR = "profile_editor";
 
     String QUERY_PARAM_ACCOUNT_KEY = "account_key";
+    String QUERY_PARAM_ACCOUNT_HOST = "account_host";
     String QUERY_PARAM_ACCOUNT_NAME = "account_name";
     String QUERY_PARAM_STATUS_ID = "status_id";
     String QUERY_PARAM_USER_KEY = "user_key";
@@ -142,6 +140,7 @@ public interface TwidereConstants extends SharedPreferenceConstants, IntentConst
     String QUERY_PARAM_TIMESTAMP = "timestamp";
     String QUERY_PARAM_FROM_NOTIFICATION = "from_notification";
     String QUERY_PARAM_NOTIFICATION_TYPE = "notification_type";
+    String QUERY_PARAM_PREVIEW = "preview";
 
     String DEFAULT_PROTOCOL = PROTOCOL_HTTPS;
 
@@ -165,7 +164,6 @@ public interface TwidereConstants extends SharedPreferenceConstants, IntentConst
     int REQUEST_ADD_TO_LIST = 15;
     int REQUEST_SELECT_USER = 16;
     int REQUEST_SELECT_USER_LIST = 17;
-    int REQUEST_PICK_ACTIVITY = 18;
     int REQUEST_SETTINGS = 19;
     int REQUEST_OPEN_DOCUMENT = 20;
     int REQUEST_REQUEST_PERMISSIONS = 30;
@@ -225,11 +223,6 @@ public interface TwidereConstants extends SharedPreferenceConstants, IntentConst
 
     String ICON_SPECIAL_TYPE_CUSTOMIZE = "_customize";
 
-    String TASK_TAG_GET_HOME_TIMELINE = "get_home_tomeline";
-    String TASK_TAG_GET_MENTIONS = "get_mentions";
-    String TASK_TAG_GET_SENT_DIRECT_MESSAGES = "get_sent_direct_messages";
-    String TASK_TAG_GET_RECEIVED_DIRECT_MESSAGES = "get_received_direct_messages";
-    String TASK_TAG_GET_TRENDS = "get_trends";
 
     String METADATA_KEY_EXTENSION = "org.mariotaku.twidere.extension";
     String METADATA_KEY_EXTENSION_PERMISSIONS = "org.mariotaku.twidere.extension.permissions";
@@ -238,6 +231,8 @@ public interface TwidereConstants extends SharedPreferenceConstants, IntentConst
     String METADATA_KEY_EXTENSION_USE_JSON = "org.mariotaku.twidere.extension.use_json";
     String METADATA_KEY_EXTENSION_VERSION_STATUS_SHORTENER = "org.mariotaku.twidere.extension.version.status_shortener";
     String METADATA_KEY_EXTENSION_VERSION_MEDIA_UPLOADER = "org.mariotaku.twidere.extension.version.media_uploader";
+
+    String METADATA_KEY_PLUS_SERVICE_SIGN_IN_LABEL = "org.mariotaku.twidere.plus_service.sign_in_label";
 
     char SEPARATOR_PERMISSION = '|';
     String SEPARATOR_PERMISSION_REGEX = "\\" + SEPARATOR_PERMISSION;
@@ -260,4 +255,5 @@ public interface TwidereConstants extends SharedPreferenceConstants, IntentConst
 
     String USER_TYPE_TWITTER_COM = "twitter.com";
     String USER_TYPE_FANFOU_COM = "fanfou.com";
+
 }

@@ -1,6 +1,6 @@
 package org.mariotaku.twidere.model.util;
 
-import org.mariotaku.twidere.api.statusnet.model.Group;
+import org.mariotaku.microblog.library.statusnet.model.Group;
 import org.mariotaku.twidere.model.ParcelableGroup;
 import org.mariotaku.twidere.model.UserKey;
 
@@ -10,6 +10,9 @@ import java.util.Date;
  * Created by mariotaku on 16/3/9.
  */
 public class ParcelableGroupUtils {
+    private ParcelableGroupUtils() {
+    }
+
     public static ParcelableGroup from(Group group, UserKey accountKey, int position, boolean member) {
         ParcelableGroup obj = new ParcelableGroup();
         obj.account_key = accountKey;

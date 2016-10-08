@@ -29,9 +29,9 @@ import android.widget.ImageView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.DisplayImageOptions.Builder;
 import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.ImageSize;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 
-import org.mariotaku.twidere.Constants;
 import org.mariotaku.twidere.model.ParcelableAccount;
 import org.mariotaku.twidere.model.ParcelableStatus;
 import org.mariotaku.twidere.model.ParcelableUser;
@@ -45,7 +45,7 @@ import javax.inject.Singleton;
 import static org.mariotaku.twidere.util.InternalTwitterContentUtils.getBestBannerUrl;
 
 @Singleton
-public class MediaLoaderWrapper implements Constants {
+public class MediaLoaderWrapper {
 
     private final ImageLoader mImageLoader;
     private final DisplayImageOptions mProfileImageDisplayOptions;
@@ -197,6 +197,22 @@ public class MediaLoaderWrapper implements Constants {
         mImageLoader.displayImage(url, view, mProfileImageDisplayOptions);
     }
 
+    public Bitmap loadImageSync(String uri) {
+        return mImageLoader.loadImageSync(uri);
+    }
+
+    public Bitmap loadImageSync(String uri, DisplayImageOptions options) {
+        return mImageLoader.loadImageSync(uri, options);
+    }
+
+    public Bitmap loadImageSync(String uri, ImageSize targetImageSize) {
+        return mImageLoader.loadImageSync(uri, targetImageSize);
+    }
+
+    public Bitmap loadImageSync(String uri, ImageSize targetImageSize, DisplayImageOptions options) {
+        return mImageLoader.loadImageSync(uri, targetImageSize, options);
+    }
+
     public void displayDashboardProfileImage(@NonNull final ImageView view,
                                              @NonNull final ParcelableAccount account,
                                              @Nullable final Drawable drawableOnLoading) {
@@ -222,12 +238,8 @@ public class MediaLoaderWrapper implements Constants {
     }
 
 
-    public void displayImage(final ImageView view, final String url, DisplayImageOptions options) {
-        mImageLoader.displayImage(url, view, options);
-    }
-
-    public DisplayImageOptions getProfileImageDisplayOptions() {
-        return mProfileImageDisplayOptions;
+    public void displayImage(final ImageView view, final String url) {
+        mImageLoader.displayImage(url, view);
     }
 
     public void displayProfileImage(final ImageView view, final String url, final ImageLoadingListener listener) {

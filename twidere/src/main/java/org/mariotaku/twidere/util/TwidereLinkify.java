@@ -20,6 +20,7 @@
 package org.mariotaku.twidere.util;
 
 import android.support.annotation.IntDef;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -68,10 +69,9 @@ public final class TwidereLinkify implements Constants {
     public static final int LINK_TYPE_LIST = 6;
     public static final int LINK_TYPE_CASHTAG = 7;
     public static final int LINK_TYPE_USER_ID = 8;
-    public static final int LINK_TYPE_STATUS = 9;
 
     public static final int[] ALL_LINK_TYPES = new int[]{LINK_TYPE_ENTITY_URL, LINK_TYPE_LINK_IN_TEXT,
-            LINK_TYPE_MENTION, LINK_TYPE_HASHTAG, LINK_TYPE_STATUS, LINK_TYPE_CASHTAG};
+            LINK_TYPE_MENTION, LINK_TYPE_HASHTAG, LINK_TYPE_CASHTAG};
 
     public static final String AVAILABLE_URL_SCHEME_PREFIX = "(https?://)?";
 
@@ -83,15 +83,8 @@ public final class TwidereLinkify implements Constants {
 
     public static final Pattern PATTERN_TWITTER_PROFILE_IMAGES = Pattern.compile(STRING_PATTERN_TWITTER_PROFILE_IMAGES,
             Pattern.CASE_INSENSITIVE);
-    public static final int GROUP_ID_TWITTER_STATUS_SCREEN_NAME = 4;
-    public static final int GROUP_ID_TWITTER_STATUS_STATUS_ID = 6;
     public static final int GROUP_ID_TWITTER_LIST_SCREEN_NAME = 4;
     public static final int GROUP_ID_TWITTER_LIST_LIST_NAME = 5;
-    private static final String STRING_PATTERN_TWITTER_STATUS_NO_SCHEME = "((mobile|www)\\.)?twitter\\.com/(?:#!/)?(\\w+)/status(es)?/(\\d+)(/photo/\\d)?/?";
-    private static final String STRING_PATTERN_TWITTER_STATUS = AVAILABLE_URL_SCHEME_PREFIX
-            + STRING_PATTERN_TWITTER_STATUS_NO_SCHEME;
-    public static final Pattern PATTERN_TWITTER_STATUS = Pattern.compile(STRING_PATTERN_TWITTER_STATUS,
-            Pattern.CASE_INSENSITIVE);
     private static final String STRING_PATTERN_TWITTER_LIST_NO_SCHEME = "((mobile|www)\\.)?twitter\\.com/(?:#!/)?(\\w+)/lists/(.+)/?";
     private static final String STRING_PATTERN_TWITTER_LIST = AVAILABLE_URL_SCHEME_PREFIX
             + STRING_PATTERN_TWITTER_LIST_NO_SCHEME;
@@ -257,25 +250,6 @@ public final class TwidereLinkify implements Constants {
                 }
                 break;
             }
-            case LINK_TYPE_STATUS: {
-                if (accountKey == null || !USER_TYPE_TWITTER_COM.equals(accountKey.getHost())) {
-                    break;
-                }
-                final int length = string.length();
-                final URLSpan[] spans = string.getSpans(0, length, URLSpan.class);
-                for (final URLSpan span : spans) {
-                    final Matcher matcher = PATTERN_TWITTER_STATUS.matcher(span.getURL());
-                    if (matcher.matches()) {
-                        final int start = string.getSpanStart(span);
-                        final int end = string.getSpanEnd(span);
-                        final String url = matcherGroup(matcher, GROUP_ID_TWITTER_STATUS_STATUS_ID);
-                        string.removeSpan(span);
-                        applyLink(url, null, start, end, string, accountKey, extraId,
-                                LINK_TYPE_STATUS, sensitive, highlightOption, listener);
-                    }
-                }
-                break;
-            }
             case LINK_TYPE_CASHTAG: {
                 addCashtagLinks(string, accountKey, extraId, listener, highlightOption);
                 break;
@@ -303,18 +277,20 @@ public final class TwidereLinkify implements Constants {
             final int listEnd = matcherEnd(matcher, Regex.VALID_MENTION_OR_LIST_GROUP_LIST);
             final String username = matcherGroup(matcher, Regex.VALID_MENTION_OR_LIST_GROUP_USERNAME);
             final String list = matcherGroup(matcher, Regex.VALID_MENTION_OR_LIST_GROUP_LIST);
-            applyLink(username, null, start, usernameEnd, spannable, accountKey, extraId,
-                    LINK_TYPE_MENTION, false, highlightOption, listener);
-            if (listStart >= 0 && listEnd >= 0 && list != null && username != null) {
-                StringBuilder sb = new StringBuilder(username);
-                if (!list.startsWith("/")) {
-                    sb.append("/");
+            if (username != null) {
+                applyLink(username, null, start, usernameEnd, spannable, accountKey, extraId,
+                        LINK_TYPE_MENTION, false, highlightOption, listener);
+                if (listStart >= 0 && listEnd >= 0 && list != null) {
+                    StringBuilder sb = new StringBuilder(username);
+                    if (!list.startsWith("/")) {
+                        sb.append("/");
+                    }
+                    sb.append(list);
+                    applyLink(sb.toString(), null, listStart, listEnd, spannable, accountKey, extraId,
+                            LINK_TYPE_LIST, false, highlightOption, listener);
                 }
-                sb.append(list);
-                applyLink(sb.toString(), null, listStart, listEnd, spannable, accountKey, extraId,
-                        LINK_TYPE_LIST, false, highlightOption, listener);
+                hasMatches = true;
             }
-            hasMatches = true;
         }
         // Extract lists from twitter.com links.
         final URLSpan[] spans = spannable.getSpans(0, spannable.length(), URLSpan.class);
@@ -334,8 +310,8 @@ public final class TwidereLinkify implements Constants {
         return hasMatches;
     }
 
-    private void applyLink(final String url, final String orig, final int start, final int end,
-                           final Spannable text, final UserKey accountKey, final long extraId, final int type, final boolean sensitive,
+    private void applyLink(@NonNull final String url, @Nullable final String orig, final int start, final int end,
+                           final Spannable text, @Nullable final UserKey accountKey, final long extraId, final int type, final boolean sensitive,
                            final int highlightOption, final OnLinkClickListener listener) {
         final TwidereURLSpan span = new TwidereURLSpan(url, orig, accountKey, extraId, type, sensitive,
                 highlightOption, start, end, listener);
@@ -350,7 +326,7 @@ public final class TwidereLinkify implements Constants {
     }
 
     public interface OnLinkClickListener {
-        void onLinkClick(String link, String orig, UserKey accountKey, long extraId, int type,
-                         boolean sensitive, int start, int end);
+        boolean onLinkClick(@NonNull String link, @Nullable String orig, @Nullable UserKey accountKey, long extraId, int type,
+                            boolean sensitive, int start, int end);
     }
 }

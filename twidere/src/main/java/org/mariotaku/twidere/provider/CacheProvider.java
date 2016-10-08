@@ -15,12 +15,12 @@ import android.webkit.MimeTypeMap;
 import com.bluelinelabs.logansquare.JsonMapper;
 import com.nostra13.universalimageloader.cache.disc.DiskCache;
 
+import org.mariotaku.commons.logansquare.LoganSquareMapperFinder;
 import org.mariotaku.restfu.RestFuUtils;
 import org.mariotaku.twidere.TwidereConstants;
 import org.mariotaku.twidere.model.CacheMetadata;
 import org.mariotaku.twidere.task.SaveFileTask;
-import org.mariotaku.twidere.util.LoganSquareMapperFinder;
-import org.mariotaku.twidere.util.Utils;
+import org.mariotaku.twidere.util.BitmapUtils;
 import org.mariotaku.twidere.util.dagger.GeneralComponentHelper;
 
 import java.io.File;
@@ -51,6 +51,7 @@ public class CacheProvider extends ContentProvider implements TwidereConstants {
         return builder.build();
     }
 
+    @NonNull
     public static String getCacheKey(Uri uri) {
         if (!ContentResolver.SCHEME_CONTENT.equals(uri.getScheme()))
             throw new IllegalArgumentException(uri.toString());
@@ -99,7 +100,7 @@ public class CacheProvider extends ContentProvider implements TwidereConstants {
                 case Type.IMAGE: {
                     final File file = mSimpleDiskCache.get(getCacheKey(uri));
                     if (file == null) return null;
-                    return Utils.getImageMimeType(file);
+                    return BitmapUtils.getImageMimeType(file);
                 }
                 case Type.VIDEO: {
                     return "video/mp4";
@@ -195,11 +196,10 @@ public class CacheProvider extends ContentProvider implements TwidereConstants {
             this.type = type;
         }
 
-        @Nullable
         @Override
+        @NonNull
         public String getFilename(@NonNull Uri source) {
             String cacheKey = getCacheKey(source);
-            if (cacheKey == null) return null;
             final int indexOfSsp = cacheKey.indexOf("://");
             if (indexOfSsp != -1) {
                 cacheKey = cacheKey.substring(indexOfSsp + 3);
